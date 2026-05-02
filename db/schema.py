@@ -1,7 +1,7 @@
 from sqlite3 import Connection
 
 
-def iniciarBD(conn: Connection):
+def iniciar_bd(conn: Connection):
     # Crear cursor
     cursor = conn.cursor()
     # Tabla de usuarios

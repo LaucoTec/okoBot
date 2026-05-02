@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from config import ID_SERVER, TOKEN
-from db.database import BaseDeDatos
+from db import BaseDeDatos
 
 
 class OkoBot(commands.Bot):
