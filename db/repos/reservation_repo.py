@@ -2,7 +2,7 @@ import sqlite3 as sql
 
 from db.queries import AsistenteDeConsultas
 from logs.loggers.db_logger import logger
-from utils.utils import normStr
+from utils.text_utils import normalizar_texto
 
 
 class RepoReservas(AsistenteDeConsultas):
@@ -20,7 +20,7 @@ class RepoReservas(AsistenteDeConsultas):
         id_mensaje=None,
     ):
         try:
-            nombre_normalizado = normStr(nombre_personaje)
+            nombre_normalizado = normalizar_texto(nombre_personaje)
             cursor = self.ejecutar(
                 """
                 INSERT INTO reservas (id_propietario, nombre_personaje, nombre_normalizado, id_obra, fecha_expiracion, enlace_imagen, id_hilo, id_mensaje) 
@@ -62,7 +62,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     def obtenerReservaPorNombreNormalizado(self, nombre: str):
         try:
-            nombre_normalizado = normStr(nombre)
+            nombre_normalizado = normalizar_texto(nombre)
             return self.consultaUno(
                 """
                 SELECT * FROM reservas WHERE nombre_normalizado = ?;
@@ -79,7 +79,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     def obtenerReservasPorNombreNormalizado(self, nombre: str):
         try:
-            nombre_normalizado = normStr(nombre)
+            nombre_normalizado = normalizar_texto(nombre)
             return self.consultaTodos(
                 """
                 SELECT * FROM reservas WHERE nombre_normalizado = ? ORDER BY fecha_reserva DESC;
@@ -96,7 +96,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     def obtenerReservasSimilaresPorNombreNormalizado(self, nombre: str):
         try:
-            nombre_normalizado = normStr(nombre)
+            nombre_normalizado = normalizar_texto(nombre)
             patron = f"%{nombre_normalizado}%"
             return self.consultaTodos(
                 """
@@ -177,7 +177,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     def obtenerReservaPorNombreYObra(self, nombre: str, id_obra: int):
         try:
-            nombre_normalizado = normStr(nombre)
+            nombre_normalizado = normalizar_texto(nombre)
             return self.consultaUno(
                 """
                 SELECT * FROM reservas WHERE nombre_normalizado = ? AND id_obra = ?;

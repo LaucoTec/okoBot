@@ -2,7 +2,7 @@ import sqlite3 as sql
 
 from db.queries import AsistenteDeConsultas
 from logs.loggers.db_logger import logger
-from utils.utils import normStr
+from utils.text_utils import normalizar_texto
 
 
 class RepoAliasObras(AsistenteDeConsultas):
@@ -11,7 +11,7 @@ class RepoAliasObras(AsistenteDeConsultas):
 
     def crearAliasObra(self, alias: str, id_obra: int):
         try:
-            nombre_normalizado = normStr(alias)
+            nombre_normalizado = normalizar_texto(alias)
             cursor = self.ejecutar(
                 """
                 INSERT INTO alias_obras (alias, id_obra, alias_normalizado) VALUES (?, ?, ?);
@@ -69,7 +69,7 @@ class RepoAliasObras(AsistenteDeConsultas):
 
     def buscarAliasesPorNombre(self, nombre_alias: str):
         try:
-            nombre_normalizado = normStr(nombre_alias)
+            nombre_normalizado = normalizar_texto(nombre_alias)
             return self.consultaTodos(
                 """
                 SELECT * FROM alias_obras WHERE alias_normalizado LIKE ? ORDER BY alias;
@@ -86,7 +86,7 @@ class RepoAliasObras(AsistenteDeConsultas):
 
     def obtenerObraPorAlias(self, alias: str):
         try:
-            nombre_normalizado = normStr(alias)
+            nombre_normalizado = normalizar_texto(alias)
             return self.consultaUno(
                 """
                 SELECT o.* FROM obras o

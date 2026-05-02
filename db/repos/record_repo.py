@@ -2,7 +2,7 @@ import sqlite3 as sql
 
 from db.queries import AsistenteDeConsultas
 from logs.loggers.db_logger import logger
-from utils.utils import normStr
+from utils.text_utils import normalizar_texto
 
 
 class RepoFichas(AsistenteDeConsultas):
@@ -18,7 +18,7 @@ class RepoFichas(AsistenteDeConsultas):
         id_mensaje: int,
     ):
         try:
-            nombre_normalizado = normStr(nombre_personaje)
+            nombre_normalizado = normalizar_texto(nombre_personaje)
             cursor = self.ejecutar(
                 """
                 INSERT INTO fichas (id_propietario, nombre_personaje, nombre_normalizado, id_obra, id_hilo, id_mensaje) 
@@ -152,7 +152,7 @@ class RepoFichas(AsistenteDeConsultas):
 
     def actualizarNombreFicha(self, id_ficha: int, nuevo_nombre: str):
         try:
-            nombre_normalizado = normStr(nuevo_nombre)
+            nombre_normalizado = normalizar_texto(nuevo_nombre)
             cursor = self.ejecutar(
                 """
                 UPDATE fichas SET nombre_personaje = ?, nombre_normalizado = ? WHERE id_ficha = ?;

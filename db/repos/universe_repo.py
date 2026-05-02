@@ -2,7 +2,7 @@ import sqlite3 as sql
 
 from db.queries import AsistenteDeConsultas
 from logs.loggers.db_logger import logger
-from utils.utils import normStr
+from utils.text_utils import normalizar_texto
 
 
 class RepoObras(AsistenteDeConsultas):
@@ -11,7 +11,7 @@ class RepoObras(AsistenteDeConsultas):
 
     def crearObra(self, nombre_obra: str, id_hilo: int):
         try:
-            nombre_normalizado = normStr(nombre_obra)
+            nombre_normalizado = normalizar_texto(nombre_obra)
             cursor = self.ejecutar(
                 """
                 INSERT OR IGNORE INTO obras (nombre_obra, nombre_normalizado, id_hilo) VALUES (?, ?, ?);
@@ -53,7 +53,7 @@ class RepoObras(AsistenteDeConsultas):
 
     def obtenerObraPorNombre(self, nombre_obra: str):
         try:
-            nombre_normalizado = normStr(nombre_obra)
+            nombre_normalizado = normalizar_texto(nombre_obra)
             return self.consultaUno(
                 """
                 SELECT * FROM obras WHERE nombre_normalizado = ?;
@@ -69,7 +69,7 @@ class RepoObras(AsistenteDeConsultas):
 
     def buscarObrasPorNombre(self, nombre_obra: str):
         try:
-            nombre_normalizado = normStr(nombre_obra)
+            nombre_normalizado = normalizar_texto(nombre_obra)
             return self.consultaTodos(
                 """
                 SELECT * FROM obras WHERE nombre_normalizado LIKE ? ORDER BY nombre_obra;
@@ -100,7 +100,7 @@ class RepoObras(AsistenteDeConsultas):
 
     def actualizarObra(self, id_obra: int, nombre_obra: str, id_hilo: int):
         try:
-            nombre_normalizado = normStr(nombre_obra)
+            nombre_normalizado = normalizar_texto(nombre_obra)
             cursor = self.ejecutar(
                 """
                 UPDATE obras SET nombre_obra = ?, nombre_normalizado = ?, id_hilo = ? WHERE id_obra = ?;

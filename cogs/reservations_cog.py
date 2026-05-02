@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime, timedelta
-from typing import List
 from zoneinfo import ZoneInfo
+from typing import List
 
 import discord
 from discord import app_commands
@@ -10,7 +10,7 @@ from discord.ext import commands
 from rapidfuzz import fuzz, process
 
 from config import ID_LOGS_RESERVAS, ID_REPOSITORIO, ID_VERIFICADOR
-from utils.utils import normStr
+from utils.text_utils import normalizar_texto
 
 # TODO: Refactor DRY and KISS
 
@@ -325,7 +325,7 @@ class reservaModal(discord.ui.Modal, title="Crear Reserva de Apariencia"):
     async def revisarDuplicados(self, idObra, nombrePj, interaction):
         reservas = self.bot.bd.reservas.obtenerReservasPorObra(idObra)
         idUsuario = interaction.user.id
-        nombreNorm = normStr(nombrePj)
+        nombreNorm = normalizar_texto(nombrePj)
 
         for reserva in reservas:
             if nombreNorm == reserva["nombre_normalizado"]:
