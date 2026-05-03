@@ -3,8 +3,35 @@ from discord import app_commands
 from discord.ext import commands
 
 from config import ID_VERIFICADOR
-from services.alias_services import autocompletar_alias, autocompletar_obra
-from views.alias_views import AliasVista
+from embeds.alias_embeds import (
+    embed_alias_crear,
+    embed_alias_listar_inicial,
+    embed_alias_log,
+)
+from services.alias_services import (
+    servicio_alias_autocompletar_alias,
+    servicio_alias_autocompletar_obra,
+    servicio_alias_crear,
+    servicio_alias_listar_obras,
+    servicio_alias_log,
+)
+from views import AliasVista
+
+
+async def autocompletar_obra(
+    interaction: discord.Interaction,
+    current: str,
+) -> list[app_commands.Choice[str]]:
+    bot = interaction.client
+    return servicio_alias_autocompletar_obra(bd=bot.bd, current=current)
+
+
+async def autocompletar_alias(
+    interaction: discord.Interaction,
+    current: str,
+) -> list[app_commands.Choice[str]]:
+    bot = interaction.client
+    return servicio_alias_autocompletar_alias(bd=bot.bd, current=current)
 
 
 class AliasCog(commands.Cog):
@@ -20,22 +47,6 @@ class AliasCog(commands.Cog):
         name="alias", description="Comandos para gestionar alias de obras"
     )
 
-    async def autocompletar_obra(
-        self,
-        _: discord.Interaction,
-        current: str,
-    ) -> list[app_commands.Choice[str]]:
-
-        return autocompletar_obra(bd=self.bot.bd, current=current)
-
-    async def autocompletar_alias(
-        self,
-        _: discord.Interaction,
-        current: str,
-    ) -> list[app_commands.Choice[str]]:
-
-        return autocompletar_alias(bd=self.bot.bd, current=current)
-
     @aliasGroup.command(
         name="crear", description="Crear un alias para una obra existente"
     )
@@ -43,26 +54,24 @@ class AliasCog(commands.Cog):
     @app_commands.autocomplete(obra=autocompletar_obra)
     @app_commands.checks.has_role(ID_VERIFICADOR)
     async def crear_alias(
-        self, interaction: discord.Interaction, alias: str, obra: str
+        self, interaction: discord.Interaction, obra: str, alias: str
     ):
-        obraData = self.bot.bd.obras.obtenerObraPorNombre(obra)
-        if obraData is None:
-            await interaction.response.send_message(
-                f"No se encontró la obra '{obra}'.", ephemeral=True
-            )
-            return
+        estado, idAlias = servicio_alias_crear(bd=self.bot.bd, obra=obra, alias=alias)
+        embed = embed_alias_crear(estado=estado, obra=obra, alias=alias)
 
-        idObra = obraData["id_obra"]
-        idAlias = self.bot.bd.aliasObras.crearAliasObra(alias, idObra)
+        await interaction.response.send_message(
+            content="Creando un alias...", embed=embed, delete_after=60
+        )
 
-        if idAlias is not None:
-            await interaction.response.send_message(
-                f"Alias '{alias}' creado para la obra '{obra}'.", ephemeral=True
+        if estado == "SUCCESS":
+            embedLog = embed_alias_log(
+                accion="CREATE",
+                obra=obra,
+                alias=alias,
+                autor=interaction.user,
+                id_operacion=idAlias,
             )
-        else:
-            await interaction.response.send_message(
-                "Error al crear el alias.", ephemeral=True
-            )
+            await servicio_alias_log(bot=self.bot, embed_log=embedLog, accion="CREATE")
 
     @aliasGroup.command(name="eliminar", description="Eliminar un alias existente")
     @app_commands.describe(alias="El alias a eliminar")
@@ -86,10 +95,16 @@ class AliasCog(commands.Cog):
         name="listar", description="Listar todos los alias registrados por obra"
     )
     async def listar_aliases(self, interaction: discord.Interaction):
-        obras = self.bot.bd.obras.obtenerObras()
+        estado, obras = servicio_alias_listar_obras(bd=self.bot.bd)
+
+        embed = embed_alias_listar_inicial(estado=estado)
+
         view = AliasVista(bd=self.bot.bd, obras=obras)
         await interaction.response.send_message(
-            "Selecciona una obra para ver sus alias:", view=view, ephemeral=True
+            "Mostrando alias...\n-# Pulsa los botones para ver otras opciones en el menú desplegable.",
+            embed=embed,
+            view=(view if estado == "SUCCESS" else None),
+            ephemeral=True,
         )
 
 

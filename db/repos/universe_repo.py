@@ -1,8 +1,9 @@
 import sqlite3 as sql
 
-from db.queries import AsistenteDeConsultas
 from logs.loggers.db_logger import logger
 from utils.text_utils import normalizar_texto
+
+from ..queries import AsistenteDeConsultas
 
 
 class RepoObras(AsistenteDeConsultas):
@@ -30,7 +31,7 @@ class RepoObras(AsistenteDeConsultas):
 
     def obtenerObra(self, id_obra: int):
         try:
-            return self.consultaUno(
+            return self.consulta_uno(
                 """
                 SELECT * FROM obras WHERE id_obra = ?;
             """,
@@ -43,7 +44,7 @@ class RepoObras(AsistenteDeConsultas):
 
     def obtenerObras(self):
         try:
-            return self.consultaTodos("""
+            return self.consulta_todos("""
                 SELECT * FROM obras ORDER BY nombre_obra;
             """)
 
@@ -54,7 +55,7 @@ class RepoObras(AsistenteDeConsultas):
     def obtenerObraPorNombre(self, nombre_obra: str):
         try:
             nombre_normalizado = normalizar_texto(nombre_obra)
-            return self.consultaUno(
+            return self.consulta_uno(
                 """
                 SELECT * FROM obras WHERE nombre_normalizado = ?;
             """,
@@ -70,7 +71,7 @@ class RepoObras(AsistenteDeConsultas):
     def buscarObrasPorNombre(self, nombre_obra: str):
         try:
             nombre_normalizado = normalizar_texto(nombre_obra)
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM obras WHERE nombre_normalizado LIKE ? ORDER BY nombre_obra;
             """,
@@ -85,7 +86,7 @@ class RepoObras(AsistenteDeConsultas):
 
     def obtenerObraPorHilo(self, id_hilo: int):
         try:
-            return self.consultaUno(
+            return self.consulta_uno(
                 """
                 SELECT * FROM obras WHERE id_hilo = ?;
             """,

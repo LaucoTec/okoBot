@@ -10,10 +10,10 @@ class AsistenteDeConsultas:
             cursor = self.conexion.execute(consulta, parametros)
         return cursor
 
-    def consultaUno(self, consulta: str, parametros: tuple = ()) -> Row | None:
+    def consulta_uno(self, consulta: str, parametros: tuple = ()) -> Row | None:
         cursor = self.conexion.execute(consulta, parametros)
         return cursor.fetchone()
 
-    def consultaTodos(self, consulta: str, parametros: tuple = ()) -> list[Row]:
+    def consulta_todos(self, consulta: str, parametros: tuple = ()) -> list[Row]:
         cursor = self.conexion.execute(consulta, parametros)
         return cursor.fetchall()

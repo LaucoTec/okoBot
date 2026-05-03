@@ -1,8 +1,9 @@
 import sqlite3 as sql
 
-from db.queries import AsistenteDeConsultas
 from logs.loggers.db_logger import logger
 from utils.text_utils import normalizar_texto
+
+from ..queries import AsistenteDeConsultas
 
 
 class RepoReservas(AsistenteDeConsultas):
@@ -49,7 +50,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     def obtenerReserva(self, id_reserva: int):
         try:
-            return self.consultaUno(
+            return self.consulta_uno(
                 """
                 SELECT * FROM reservas WHERE id_reserva = ?;
             """,
@@ -63,7 +64,7 @@ class RepoReservas(AsistenteDeConsultas):
     def obtenerReservaPorNombreNormalizado(self, nombre: str):
         try:
             nombre_normalizado = normalizar_texto(nombre)
-            return self.consultaUno(
+            return self.consulta_uno(
                 """
                 SELECT * FROM reservas WHERE nombre_normalizado = ?;
             """,
@@ -80,7 +81,7 @@ class RepoReservas(AsistenteDeConsultas):
     def obtenerReservasPorNombreNormalizado(self, nombre: str):
         try:
             nombre_normalizado = normalizar_texto(nombre)
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM reservas WHERE nombre_normalizado = ? ORDER BY fecha_reserva DESC;
             """,
@@ -98,7 +99,7 @@ class RepoReservas(AsistenteDeConsultas):
         try:
             nombre_normalizado = normalizar_texto(nombre)
             patron = f"%{nombre_normalizado}%"
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM reservas WHERE nombre_normalizado LIKE ? ORDER BY fecha_reserva DESC;
             """,
@@ -114,7 +115,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     def obtenerReservasPorUsuario(self, id_propietario: int):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM reservas WHERE id_propietario = ? ORDER BY fecha_reserva DESC;
             """,
@@ -130,7 +131,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     def obtenerReservasPorObra(self, id_obra: int):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM reservas WHERE id_obra = ? ORDER BY fecha_reserva DESC;
             """,
@@ -145,7 +146,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     def obtenerReservasPorUsuarioEstado(self, id_propietario: int, estado: str):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM reservas WHERE id_propietario = ? AND estado = ? ORDER BY fecha_reserva DESC;
             """,
@@ -161,7 +162,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     def obtenerReservasPorExpiracion(self, fecha_expiracion: str):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM reservas WHERE fecha_expiracion <= ? ORDER BY fecha_expiracion ASC;
             """,
@@ -178,7 +179,7 @@ class RepoReservas(AsistenteDeConsultas):
     def obtenerReservaPorNombreYObra(self, nombre: str, id_obra: int):
         try:
             nombre_normalizado = normalizar_texto(nombre)
-            return self.consultaUno(
+            return self.consulta_uno(
                 """
                 SELECT * FROM reservas WHERE nombre_normalizado = ? AND id_obra = ?;
             """,
@@ -289,7 +290,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     def obtenerTodasReservas(self):
         try:
-            return self.consultaTodos("""
+            return self.consulta_todos("""
                 SELECT * FROM reservas;
             """)
 
@@ -299,7 +300,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     def obtenerReservasVencidasAntiguas(self, dias: int):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM reservas
                 WHERE estado = 'vencida'
@@ -353,7 +354,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     def obtenerAutorDeReserva(self, id_reserva: int):
         try:
-            return self.consultaUno(
+            return self.consulta_uno(
                 """
                 SELECT u.* FROM usuarios u
                 JOIN reservas r ON u.id_usuario = r.id_propietario

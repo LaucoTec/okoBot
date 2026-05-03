@@ -3,14 +3,14 @@ from discord.ext import commands
 
 
 async def obtener_canal(
-    bot: commands.Bot, canalID: int
+    bot: commands.Bot, canal_id: int
 ) -> discord.abc.GuildChannel | discord.Thread | None:
 
-    canal = bot.get_channel(canalID)
+    canal = bot.get_channel(canal_id)
 
     if canal is None:
         try:
-            canal = await bot.fetch_channel(canalID)
+            canal = await bot.fetch_channel(canal_id)
 
         except discord.NotFound:
             return None
@@ -19,10 +19,10 @@ async def obtener_canal(
 
 
 async def obtener_mensaje(
-    canal: discord.TextChannel | discord.Thread, mensajeID: int
+    canal: discord.TextChannel | discord.Thread, mensaje_id: int
 ) -> discord.Message | None:
     try:
-        return await canal.fetch_message(mensajeID)
+        return await canal.fetch_message(mensaje_id)
 
     except discord.NotFound:
         return None

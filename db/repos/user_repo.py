@@ -1,7 +1,8 @@
 import sqlite3 as sql
 
-from db.queries import AsistenteDeConsultas
 from logs.loggers.db_logger import logger
+
+from ..queries import AsistenteDeConsultas
 
 
 class RepoUsuarios(AsistenteDeConsultas):
@@ -28,7 +29,7 @@ class RepoUsuarios(AsistenteDeConsultas):
 
     def obtenerUsuario(self, id_usuario: int):
         try:
-            return self.consultaUno(
+            return self.consulta_uno(
                 """
                 SELECT * FROM usuarios WHERE id_usuario = ?;
             """,
@@ -41,7 +42,7 @@ class RepoUsuarios(AsistenteDeConsultas):
 
     def obtenerTodosUsuarios(self):
         try:
-            return self.consultaTodos("""
+            return self.consulta_todos("""
                 SELECT * FROM usuarios;
             """)
 
@@ -51,7 +52,7 @@ class RepoUsuarios(AsistenteDeConsultas):
 
     def obtenerUsuariosInactivos(self, dias: int):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM usuarios
                 WHERE ultima_actividad <= DATETIME('now', ?)

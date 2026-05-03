@@ -1,8 +1,9 @@
 import sqlite3 as sql
 from pathlib import Path
 
-import db.schema as schema
 from db.repos import RepoAliasObras, RepoFichas, RepoObras, RepoReservas, RepoUsuarios
+
+from .schema import iniciar_bd
 
 
 class BaseDeDatos:
@@ -27,7 +28,7 @@ class BaseDeDatos:
         self.conexion.row_factory = sql.Row
 
         # Crear esquema si no existe
-        schema.iniciarBD(self.conexion)
+        iniciar_bd(self.conexion)
 
         # Inicializar asistentes de consultas para cada repositorio
         self.usuarios = RepoUsuarios(self.conexion)
@@ -39,7 +40,7 @@ class BaseDeDatos:
     def cerrar(self):
         self.conexion.close()
 
-    def buscarObraPorNombreOAlias(self, nombre):
+    def buscarObraPorNombreOAlias(self, nombre: str) -> sql.Row | None:
         """
         Busca una obra por su nombre o por cualquiera de sus alias.
         Retorna un diccionario con los datos de la obra o None si no se encuentra.
@@ -47,11 +48,11 @@ class BaseDeDatos:
         # Buscar por nombre de obra
         obra = self.obras.obtenerObraPorNombre(nombre)
         if obra:
-            return dict(obra)
+            return obra
 
         # Buscar por alias
         alias = self.aliasObras.obtenerObraPorAlias(nombre)
         if alias:
-            return dict(alias)
+            return alias
 
         return None

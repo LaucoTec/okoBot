@@ -1,8 +1,9 @@
 import sqlite3 as sql
 
-from db import AsistenteDeConsultas
-from logs.loggers.db_logger import logger
-from utils.text_utils import normalizar_texto
+from logs.loggers import db_logger as logger
+from utils import normalizar_texto
+
+from ..queries import AsistenteDeConsultas
 
 
 class RepoAliasObras(AsistenteDeConsultas):
@@ -29,7 +30,7 @@ class RepoAliasObras(AsistenteDeConsultas):
 
     def obtenerAliasesObras(self):
         try:
-            return self.consultaTodos("""
+            return self.consulta_todos("""
                 SELECT * FROM alias_obras;
             """)
 
@@ -41,7 +42,7 @@ class RepoAliasObras(AsistenteDeConsultas):
 
     def obtenerAliasObra(self, id_alias: int):
         try:
-            return self.consultaUno(
+            return self.consulta_uno(
                 """
                 SELECT * FROM alias_obras WHERE id_alias = ?;
             """,
@@ -54,7 +55,7 @@ class RepoAliasObras(AsistenteDeConsultas):
 
     def obtenerAliasesObra(self, id_obra: int):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM alias_obras WHERE id_obra = ?;
             """,
@@ -70,7 +71,7 @@ class RepoAliasObras(AsistenteDeConsultas):
     def buscarAliasesPorNombre(self, nombre_alias: str):
         try:
             nombre_normalizado = normalizar_texto(nombre_alias)
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM alias_obras WHERE alias_normalizado LIKE ? ORDER BY alias;
             """,
@@ -87,7 +88,7 @@ class RepoAliasObras(AsistenteDeConsultas):
     def obtenerObraPorAlias(self, alias: str):
         try:
             nombre_normalizado = normalizar_texto(alias)
-            return self.consultaUno(
+            return self.consulta_uno(
                 """
                 SELECT o.* FROM obras o
                 JOIN alias_obras a ON o.id_obra = a.id_obra

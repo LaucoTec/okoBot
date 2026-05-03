@@ -19,5 +19,9 @@ ID_ADVERTENCIAS = int(os.getenv("ID_ADVERTENCIAS"))
 ID_REPOSITORIO = int(os.getenv("ID_REPOSITORIO"))
 # ID foro de reservas
 ID_RESERVAS = int(os.getenv("ID_RESERVAS"))
+# ID de logs de obras y alias
+ID_LOGS_OBRAS = int(os.getenv("ID_LOGS_OBRAS"))
 # ID de logs de reservas
 ID_LOGS_RESERVAS = int(os.getenv("ID_LOGS_RESERVAS"))
+# Id de logs de fichas
+ID_LOGS_FICHAS = int(os.getenv("ID_LOGS_FICHAS"))

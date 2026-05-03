@@ -1,8 +1,9 @@
 import sqlite3 as sql
 
-from db.queries import AsistenteDeConsultas
 from logs.loggers.db_logger import logger
 from utils.text_utils import normalizar_texto
+
+from ..queries import AsistenteDeConsultas
 
 
 class RepoFichas(AsistenteDeConsultas):
@@ -44,7 +45,7 @@ class RepoFichas(AsistenteDeConsultas):
 
     def obtenerFicha(self, id_ficha: int):
         try:
-            return self.consultaUno(
+            return self.consulta_uno(
                 """
                 SELECT * FROM fichas WHERE id_ficha = ?;
             """,
@@ -57,7 +58,7 @@ class RepoFichas(AsistenteDeConsultas):
 
     def obtenerFichaPorNombreNormalizado(self, nombre_normalizado: str):
         try:
-            return self.consultaUno(
+            return self.consulta_uno(
                 """
                 SELECT * FROM fichas WHERE nombre_normalizado = ?;
             """,
@@ -73,7 +74,7 @@ class RepoFichas(AsistenteDeConsultas):
 
     def obtenerFichasPorNombreNormalizado(self, nombre_normalizado: str):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM fichas WHERE nombre_normalizado = ? ORDER BY fecha_creacion DESC;
             """,
@@ -89,7 +90,7 @@ class RepoFichas(AsistenteDeConsultas):
 
     def obtenerFichasPorUsuario(self, id_propietario: int):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM fichas WHERE id_propietario = ? ORDER BY fecha_creacion DESC;
             """,
@@ -105,7 +106,7 @@ class RepoFichas(AsistenteDeConsultas):
 
     def obtenerFichasActivasPorUsuario(self, id_propietario: int):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM fichas WHERE id_propietario = ? AND estado = 'activa' ORDER BY fecha_creacion DESC;
             """,
@@ -121,7 +122,7 @@ class RepoFichas(AsistenteDeConsultas):
 
     def obtenerFichasPorObra(self, id_obra: int):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM fichas WHERE id_obra = ? ORDER BY fecha_creacion DESC;
             """,
@@ -136,7 +137,7 @@ class RepoFichas(AsistenteDeConsultas):
 
     def obtenerFichasPorUsuarioEstado(self, id_propietario: int, estado: str):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM fichas WHERE id_propietario = ? AND estado = ? ORDER BY fecha_creacion DESC;
             """,
@@ -223,7 +224,7 @@ class RepoFichas(AsistenteDeConsultas):
 
     def obtenerTodasFichas(self):
         try:
-            return self.consultaTodos("""
+            return self.consulta_todos("""
                 SELECT * FROM fichas;
             """)
 
@@ -233,7 +234,7 @@ class RepoFichas(AsistenteDeConsultas):
 
     def obtenerFichasEliminadasAntiguas(self, dias: int):
         try:
-            return self.consultaTodos(
+            return self.consulta_todos(
                 """
                 SELECT * FROM fichas
                 WHERE estado = 'eliminada'

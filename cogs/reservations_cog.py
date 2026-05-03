@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 from typing import List
+from zoneinfo import ZoneInfo
 
 import discord
 from discord import app_commands
@@ -685,7 +685,7 @@ class ReservaCog(commands.Cog):
     async def crearReserva(self, interaction: discord.Interaction):
         idUsuario = interaction.user.id
         self.bot.bd.usuarios.crearUsuario(interaction.user.id)
-        self.bot.bd.usuarios.actualizarUsuario(interaction.user.id)
+        self.bot.bd.usuarios.actualizarActividad(interaction.user.id)
 
         if idUsuario in self.bot.reservasPendientes:
             await interaction.response.send_message(
@@ -779,7 +779,7 @@ class ReservaCog(commands.Cog):
     @app_commands.checks.cooldown(1, 300.0, key=lambda i: (i.user.id))
     async def eliminarReserva(self, interaction: discord.Interaction, id_reserva: int):
         self.bot.bd.usuarios.crearUsuario(interaction.user.id)
-        self.bot.bd.usuarios.actualizarUsuario(interaction.user.id)
+        self.bot.bd.usuarios.actualizarActividad(interaction.user.id)
 
         reserva = self.bot.bd.reservas.obtenerReserva(id_reserva)
         if reserva is None:
@@ -862,7 +862,7 @@ class ReservaCog(commands.Cog):
     ):
         usuario = usuario or interaction.user
         self.bot.bd.usuarios.crearUsuario(interaction.user.id)
-        self.bot.bd.usuarios.actualizarUsuario(interaction.user.id)
+        self.bot.bd.usuarios.actualizarActividad(interaction.user.id)
 
         if obra:
             reservas = self.bot.bd.buscarObraPorNombreOAlias(obra)
@@ -902,7 +902,7 @@ class ReservaCog(commands.Cog):
     @app_commands.checks.cooldown(1, 60.0, key=lambda i: (i.user.id))
     async def renovarReserva(self, interaction: discord.Interaction, reserva: int):
         self.bot.bd.usuarios.crearUsuario(interaction.user.id)
-        self.bot.bd.usuarios.actualizarUsuario(interaction.user.id)
+        self.bot.bd.usuarios.actualizarActividad(interaction.user.id)
         usuario = self.bot.bd.usuarios.obtenerUsuario(interaction.user.id)
         duracionReserva = usuario["duracion_reserva"]
 
@@ -974,7 +974,7 @@ class ReservaCog(commands.Cog):
                 )
                 embedLog = discord.Embed(
                     title=f"Reserva renovada en {canalOg.name}",
-                    color=discord.Color.teal(),
+                    color=discord.Color.pink(),
                     description=description,
                 )
                 canalLog = self.bot.get_channel(ID_LOGS_RESERVAS)
