@@ -1,5 +1,6 @@
 import discord
 from discord import app_commands
+from discord.app_commands import CommandOnCooldown, MissingRole
 from discord.ext import commands
 
 from config import ID_VERIFICADOR
@@ -73,6 +74,7 @@ class AliasCog(commands.Cog):
             )
             await servicio_alias_log(bot=self.bot, embed_log=embedLog, accion="CREATE")
 
+    # TODO: Refacotirzar /eliminar
     @aliasGroup.command(name="eliminar", description="Eliminar un alias existente")
     @app_commands.describe(alias="El alias a eliminar")
     @app_commands.autocomplete(alias=autocompletar_alias)
@@ -105,6 +107,27 @@ class AliasCog(commands.Cog):
             embed=embed,
             view=(view if estado == "SUCCESS" else None),
             ephemeral=True,
+        )
+
+    async def cog_app_command_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
+        embed = discord.Embed(color=discord.Color.darker_gray())
+        if isinstance(error, CommandOnCooldown):
+            tiempo = int(error.retry_after)
+            minutos = tiempo // 60
+            segundos = tiempo % 60
+            embed.description = f"Espere ⏱️ {minutos} minutos con {segundos} segundos antes de usar este comando nuevamente."
+        elif isinstance(error, MissingRole):
+            embed.description = (
+                "Esta acción esta reservada para nuestros Archivistas. 🔎"
+            )
+        else:
+            embed.description = "Error desconocido."
+            print(f"Error no manejado: {error}")
+
+        await interaction.response.send_message(
+            embed=embed, ephemeral=True, delete_after=20
         )
 
 

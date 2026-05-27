@@ -85,6 +85,23 @@ class RepoAliasObras(AsistenteDeConsultas):
             )
             return []
 
+    def buscarAliasesPorNombre_exacto(self, nombre_alias: str):
+        try:
+            nombre_normalizado = normalizar_texto(nombre_alias)
+            return self.consulta_todos(
+                """
+                SELECT * FROM alias_obras WHERE alias_normalizado = ? ORDER BY alias;
+            """,
+                (f"%{nombre_normalizado}%",),
+            )
+
+        except sql.Error as e:
+            logger.error(
+                f"Error buscando aliases por nombre '{nombre_alias}': {e}",
+                exc_info=True,
+            )
+            return []
+
     def obtenerObraPorAlias(self, alias: str):
         try:
             nombre_normalizado = normalizar_texto(alias)

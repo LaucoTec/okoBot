@@ -68,7 +68,7 @@ class OkoBot(commands.Bot):
 async def main():
     bot = OkoBot()
     async with bot:
-        await bot.start(TOKEN)
+        await bot.start(token=TOKEN)
 
 
 if __name__ == "__main__":

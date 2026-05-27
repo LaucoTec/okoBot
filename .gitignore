@@ -7,8 +7,12 @@
 # Python cache
 __pycache__/
 *.pyc
+
 # Log files
 logs/files/
+
+# Database files
+*.db
 
 # VSCode
 .vscode/

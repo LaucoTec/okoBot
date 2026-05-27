@@ -10,15 +10,22 @@ from .embed_base import (
 
 def embed_alias_crear(estado: str, obra: str, alias: str) -> Embed:
     if estado.startswith("ERROR"):
-        if estado == "ERROR_NOT_FOUND":
+        if estado == "ERROR_TOO_SHORT":
+            motivo = (
+                "El alias provisto es demasiado corto.\nIngrese al menos 2 caracteres."
+            )
+
+        elif estado == "ERROR_REPEATED":
+            motivo = f"Este alias ya existe para la obra '{obra}'."
+
+        elif estado == "ERROR_NOT_FOUND":
             motivo = f"No se ha encontrado la obra '{obra}'.\nVerifique la información proporcionada."
 
         elif estado == "ERROR_NOT_CREATED":
             motivo = (
                 f"No se ha podido crear el alias '{alias}'.\nIntente de nuevo más tarde"
             )
-        elif estado == "ERROR_REPEATED":
-            motivo = f"Este alias ya existe para la obra '{obra}'."
+
         else:
             raise ValueError(f"Estado no válido {estado}")
 

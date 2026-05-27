@@ -81,7 +81,11 @@ def servicio_alias_crear(
     """
     estado = "SUCCESS"
 
-    aliases = bd.aliasObras.buscarAliasesPorNombre(nombre_alias=alias)
+    if len(alias) < 2:
+        estado = "ERROR_TOO_SHORT"
+        return estado, None
+
+    aliases = bd.aliasObras.buscarAliasesPorNombre_exacto(nombre_alias=alias)
 
     if aliases:
         estado = "ERROR_REPEATED"
