@@ -15,6 +15,7 @@ class RepoFichas(AsistenteDeConsultas):
         id_hilo: int,
         id_mensaje: int,
     ) -> int | None:
+        """Crea una nueva ficha de personaje para un usuario en una obra específica."""
         try:
             nombre_normalizado = normalizar_texto(nombre_personaje)
             cursor = self.ejecutar(
@@ -41,6 +42,7 @@ class RepoFichas(AsistenteDeConsultas):
             raise
 
     def obtener_ficha_por_id(self, id_ficha: int) -> sql.Row | None:
+        """Obtiene una ficha de personaje por su ID."""
         try:
             return self.consulta_uno(
                 """
@@ -54,6 +56,7 @@ class RepoFichas(AsistenteDeConsultas):
             return None
 
     def obtener_fichas(self) -> list[sql.Row]:
+        """Obtiene todas las fichas de personajes registradas en la base de datos."""
         try:
             return self.consulta_todos("""
                 SELECT * FROM fichas;
@@ -66,6 +69,7 @@ class RepoFichas(AsistenteDeConsultas):
     def obtener_ficha_por_nombre_normalizado(
         self, nombre_normalizado: str
     ) -> sql.Row | None:
+        """Obtiene una ficha de personaje por su nombre normalizado."""
         try:
             return self.consulta_uno(
                 """
@@ -85,6 +89,7 @@ class RepoFichas(AsistenteDeConsultas):
     def obtener_fichas_por_nombre_normalizado(
         self, nombre_normalizado: str
     ) -> list[sql.Row]:
+        """Obtiene todas las fichas de personajes que coinciden con un nombre normalizado."""
         try:
             return self.consulta_todos(
                 """
@@ -101,6 +106,7 @@ class RepoFichas(AsistenteDeConsultas):
             return []
 
     def obtener_fichas_por_usuario(self, id_propietario: int) -> list[sql.Row]:
+        """Obtiene todas las fichas de personajes creadas por un usuario específico."""
         try:
             return self.consulta_todos(
                 """
@@ -117,6 +123,7 @@ class RepoFichas(AsistenteDeConsultas):
             return []
 
     def obtener_fichas_por_obra(self, id_obra: int) -> list[sql.Row]:
+        """Obtiene todas las fichas de personajes asociadas a una obra específica."""
         try:
             return self.consulta_todos(
                 """
@@ -134,6 +141,7 @@ class RepoFichas(AsistenteDeConsultas):
     def obtener_fichas_por_usuario_y_estado(
         self, id_propietario: int, estado: str
     ) -> list[sql.Row]:
+        """Obtiene todas las fichas de personajes creadas por un usuario específico con un estado determinado (activa o eliminada)."""
         try:
             return self.consulta_todos(
                 """
@@ -150,6 +158,7 @@ class RepoFichas(AsistenteDeConsultas):
             return []
 
     def obtener_fichas_eliminadas_antiguas(self, dias: int) -> list[sql.Row]:
+        """Obtiene todas las fichas de personajes que han estado en estado 'eliminada' por más de un número determinado de días."""
         try:
             return self.consulta_todos(
                 """
@@ -167,6 +176,7 @@ class RepoFichas(AsistenteDeConsultas):
             return []
 
     def actualizar_nombre_ficha(self, id_ficha: int, nuevo_nombre: str) -> bool:
+        """Actualiza el nombre de un personaje en una ficha específica."""
         try:
             nombre_normalizado = normalizar_texto(nuevo_nombre)
             cursor = self.ejecutar(
@@ -185,6 +195,7 @@ class RepoFichas(AsistenteDeConsultas):
             raise
 
     def actualizar_obra_ficha(self, id_ficha: int, nuevo_id_obra: int) -> bool:
+        """Actualiza la obra asociada a una ficha de personaje específica."""
         try:
             cursor = self.ejecutar(
                 """
@@ -202,6 +213,7 @@ class RepoFichas(AsistenteDeConsultas):
             raise
 
     def actualizar_estado_ficha(self, id_ficha: int, nuevo_estado: str) -> bool:
+        """Actualiza el estado de una ficha de personaje específica (activa o eliminada)."""
         if nuevo_estado not in ("activa", "eliminada"):
             logger.warning(f"Estado inválido para ficha {id_ficha}: {nuevo_estado}")
             return False
@@ -222,22 +234,8 @@ class RepoFichas(AsistenteDeConsultas):
             )
             raise
 
-    def eliminar_ficha_suave(self, id_ficha: int) -> bool:
-        try:
-            cursor = self.ejecutar(
-                """
-                UPDATE fichas SET estado = 'eliminada', fecha_estado = CURRENT_TIMESTAMP WHERE id_ficha = ?;
-            """,
-                (id_ficha,),
-            )
-
-            return cursor.rowcount > 0
-
-        except sql.Error as e:
-            logger.error(f"Error eliminando ficha {id_ficha}: {e}", exc_info=True)
-            raise
-
     def eliminar_ficha_definitivo(self, id_ficha: int) -> bool:
+        """Elimina definitivamente una ficha de personaje de la base de datos."""
         try:
             cursor = self.ejecutar(
                 """
