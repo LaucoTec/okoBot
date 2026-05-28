@@ -7,10 +7,8 @@ from ..queries import AsistenteDeConsultas
 
 
 class RepoAliasObras(AsistenteDeConsultas):
-    def __init__(self, conexion):
-        super().__init__(conexion)
-
-    def crearAliasObra(self, alias: str, id_obra: int):
+    def crear_alias_obra(self, alias: str, id_obra: int) -> int | None:
+        """Crea un nuevo alias para una obra."""
         try:
             nombre_normalizado = normalizar_texto(alias)
             cursor = self.ejecutar(
@@ -20,7 +18,7 @@ class RepoAliasObras(AsistenteDeConsultas):
                 (alias, id_obra, nombre_normalizado),
             )
 
-            return cursor.lastrowid if cursor is not None else None
+            return cursor.lastrowid
 
         except sql.Error as e:
             logger.error(
@@ -28,7 +26,8 @@ class RepoAliasObras(AsistenteDeConsultas):
             )
             raise
 
-    def obtenerAliasesObras(self):
+    def obtener_aliases_obras(self) -> list[sql.Row]:
+        """Obtiene todos los alias de obras registrados."""
         try:
             return self.consulta_todos("""
                 SELECT * FROM alias_obras;
@@ -40,7 +39,8 @@ class RepoAliasObras(AsistenteDeConsultas):
             )
             return []
 
-    def obtenerAliasObra(self, id_alias: int):
+    def obtener_alias_por_id(self, id_alias: int) -> sql.Row | None:
+        """Obtiene un alias de obra por su ID."""
         try:
             return self.consulta_uno(
                 """
@@ -53,7 +53,8 @@ class RepoAliasObras(AsistenteDeConsultas):
             logger.error(f"Error obteniendo alias {id_alias}: {e}", exc_info=True)
             return None
 
-    def obtenerAliasesObra(self, id_obra: int):
+    def obtener_aliases_por_id_obra(self, id_obra: int) -> list[sql.Row]:
+        """Obtiene todos los alias asociados a una obra por su ID."""
         try:
             return self.consulta_todos(
                 """
@@ -68,7 +69,8 @@ class RepoAliasObras(AsistenteDeConsultas):
             )
             return []
 
-    def buscarAliasesPorNombre(self, nombre_alias: str):
+    def obtener_aliases_por_nombre(self, nombre_alias: str) -> list[sql.Row]:
+        """Busca alias de obras que coincidan parcialmente con un nombre dado."""
         try:
             nombre_normalizado = normalizar_texto(nombre_alias)
             return self.consulta_todos(
@@ -85,14 +87,15 @@ class RepoAliasObras(AsistenteDeConsultas):
             )
             return []
 
-    def buscarAliasesPorNombre_exacto(self, nombre_alias: str):
+    def obtener_alias_por_nombre_exacto(self, nombre_alias: str) -> sql.Row | None:
+        """Busca un alias de obra que coincida exactamente con un nombre dado."""
         try:
             nombre_normalizado = normalizar_texto(nombre_alias)
-            return self.consulta_todos(
+            return self.consulta_uno(
                 """
                 SELECT * FROM alias_obras WHERE alias_normalizado = ? ORDER BY alias;
             """,
-                (f"%{nombre_normalizado}%",),
+                (nombre_normalizado,),
             )
 
         except sql.Error as e:
@@ -100,9 +103,10 @@ class RepoAliasObras(AsistenteDeConsultas):
                 f"Error buscando aliases por nombre '{nombre_alias}': {e}",
                 exc_info=True,
             )
-            return []
+            return None
 
-    def obtenerObraPorAlias(self, alias: str):
+    def obtener_obra_por_alias(self, alias: str) -> sql.Row | None:
+        """Obtiene la obra asociada a un alias dado."""
         try:
             nombre_normalizado = normalizar_texto(alias)
             return self.consulta_uno(
@@ -120,7 +124,8 @@ class RepoAliasObras(AsistenteDeConsultas):
             )
             return None
 
-    def eliminarAliasObra(self, id_alias: int):
+    def eliminar_alias_obra(self, id_alias: int) -> bool:
+        """Elimina un alias de obra por su ID."""
         try:
             cursor = self.ejecutar(
                 """
@@ -129,7 +134,7 @@ class RepoAliasObras(AsistenteDeConsultas):
                 (id_alias,),
             )
 
-            return cursor is not None and cursor.rowcount > 0
+            return cursor.rowcount > 0
 
         except sql.Error as e:
             logger.error(f"Error eliminando alias {id_alias}: {e}", exc_info=True)

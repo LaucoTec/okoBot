@@ -7,11 +7,11 @@ load_dotenv()
 
 
 @overload
-def _env(key: str, *, cast: type = str, required: bool = True) -> str: ...
+def _env(key: str, *, cast: type[str] = str, required: bool = True) -> str: ...
 
 
 @overload
-def _env(key: str, *, cast: type = int, required: bool = True) -> int: ...
+def _env(key: str, *, cast: type[int], required: bool = True) -> int: ...
 
 
 def _env(key: str, *, cast: type = str, required: bool = True):
@@ -24,6 +24,7 @@ def _env(key: str, *, cast: type = str, required: bool = True):
     if cast is int:
         try:
             return int(value)
+
         except ValueError as exc:
             raise ValueError(
                 f"Environment variable {key!r} must be an integer, got {value!r}"

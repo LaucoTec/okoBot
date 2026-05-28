@@ -51,7 +51,7 @@ class BaseDeDatos:
             return obra
 
         # Buscar por alias
-        alias = self.aliasObras.obtenerObraPorAlias(nombre)
+        alias = self.aliasObras.obtener_obra_por_alias(nombre)
         if alias:
             return alias
 

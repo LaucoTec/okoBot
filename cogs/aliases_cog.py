@@ -80,7 +80,7 @@ class AliasCog(commands.Cog):
     @app_commands.autocomplete(alias=autocompletar_alias)
     @app_commands.checks.has_role(ID_VERIFICADOR)
     async def eliminar_alias(self, interaction: discord.Interaction, alias: str):
-        aliasData = self.bot.bd.aliasObras.obtenerObraPorAlias(alias)
+        aliasData = self.bot.bd.aliasObras.obtener_obra_por_alias(alias)
         if aliasData is None:
             await interaction.response.send_message(
                 f"No se encontró el alias '{alias}'.", ephemeral=True
@@ -88,7 +88,7 @@ class AliasCog(commands.Cog):
             return
 
         idAlias = aliasData["id_alias"]
-        self.bot.bd.aliasObras.eliminarAliasObra(idAlias)
+        self.bot.bd.aliasObras.eliminar_alias_obra(idAlias)
         await interaction.response.send_message(
             f"Alias '{alias}' eliminado.", ephemeral=True
         )

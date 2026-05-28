@@ -1,6 +1,7 @@
 from sqlite3 import Row
 
 from discord import Embed, app_commands
+from discord.abc import Messageable
 from discord.ext.commands import Bot
 
 from config import ID_LOGS_OBRAS
@@ -53,9 +54,9 @@ def servicio_alias_autocompletar_alias(
         list[app_commands.Choice[str]]: Lista de opciones encontradas
     """
     if len(current) < 2:
-        todosAliases = bd.aliasObras.obtenerAliasesObras()
+        todosAliases = bd.aliasObras.obtener_aliases_obras()
     else:
-        todosAliases = bd.aliasObras.buscarAliasesPorNombre(current)
+        todosAliases = bd.aliasObras.obtener_aliases_por_nombre(current)
 
     if not todosAliases:
         return []
@@ -85,7 +86,7 @@ def servicio_alias_crear(
         estado = "ERROR_TOO_SHORT"
         return estado, None
 
-    aliases = bd.aliasObras.buscarAliasesPorNombre_exacto(nombre_alias=alias)
+    aliases = bd.aliasObras.obtener_alias_por_nombre_exacto(nombre_alias=alias)
 
     if aliases:
         estado = "ERROR_REPEATED"
@@ -97,7 +98,7 @@ def servicio_alias_crear(
         estado = "ERROR_NOT_FOUND"
         return estado, None
 
-    idAlias = bd.aliasObras.crearAliasObra(alias=alias, id_obra=obraData["id_obra"])
+    idAlias = bd.aliasObras.crear_alias_obra(alias=alias, id_obra=obraData["id_obra"])
 
     if idAlias is None:
         estado = "ERROR_NOT_CREATED"
@@ -119,7 +120,7 @@ def servicio_alias_listar_aliases(
     bd: BaseDeDatos, id_obra: int
 ) -> tuple[str, list[Row]]:
     estado = "SUCCESS"
-    aliases = bd.aliasObras.obtenerAliasesObra(id_obra=id_obra)
+    aliases = bd.aliasObras.obtener_aliases_por_id_obra(id_obra=id_obra)
 
     if not aliases:
         estado = "ERROR_NOT_FOUND"
@@ -130,7 +131,7 @@ def servicio_alias_listar_aliases(
 async def servicio_alias_log(bot: Bot, embed_log: Embed, accion: str) -> bool:
 
     canalLog = await obtener_canal(bot=bot, canal_id=ID_LOGS_OBRAS)
-    if canalLog is not None:
+    if isinstance(canalLog, Messageable):
         if accion == "CREATE":
             mensaje = "Alias creado."
         elif accion == "DELETE":
