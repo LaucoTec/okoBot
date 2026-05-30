@@ -2,8 +2,7 @@ import sqlite3 as sql
 from pathlib import Path
 
 from db.repos import RepoAliasObras, RepoFichas, RepoObras, RepoReservas, RepoUsuarios
-
-from .schema import iniciar_bd
+from db.schema import iniciar_bd
 
 
 class BaseDeDatos:
@@ -46,7 +45,7 @@ class BaseDeDatos:
         Retorna un diccionario con los datos de la obra o None si no se encuentra.
         """
         # Buscar por nombre de obra
-        obra = self.obras.obtenerObraPorNombre(nombre)
+        obra = self.obras.obtener_obra_por_nombre_normalizado(nombre)
         if obra:
             return obra
 

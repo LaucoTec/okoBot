@@ -1,6 +1,6 @@
 from discord import Color, Embed, User
 
-from .embed_base import (
+from embeds.embed_base import (
     generico_advertencia,
     generico_error,
     generico_exito,

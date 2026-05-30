@@ -1,6 +1,5 @@
 discord.py==2.7.1
 python-dotenv==1.2.2
-pydantic==2.8.0
 RapidFuzz==3.14.5
 tzdata==2026.2
 Unidecode==1.4.0

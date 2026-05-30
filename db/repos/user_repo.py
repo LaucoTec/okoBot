@@ -1,8 +1,7 @@
 import sqlite3 as sql
 
+from db.queries import AsistenteDeConsultas
 from logs.loggers.db_logger import logger
-
-from ..queries import AsistenteDeConsultas
 
 
 class RepoUsuarios(AsistenteDeConsultas):

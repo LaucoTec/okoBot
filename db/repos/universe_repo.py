@@ -1,9 +1,8 @@
 import sqlite3 as sql
 
+from db.queries import AsistenteDeConsultas
 from logs.loggers.db_logger import logger
 from utils.text_utils import normalizar_texto
-
-from ..queries import AsistenteDeConsultas
 
 
 class RepoObras(AsistenteDeConsultas):
