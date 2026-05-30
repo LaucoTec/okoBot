@@ -6,10 +6,7 @@ from ..queries import AsistenteDeConsultas
 
 
 class RepoUsuarios(AsistenteDeConsultas):
-    def __init__(self, conexion):
-        super().__init__(conexion)
-
-    def crearUsuario(self, id_usuario: int):
+    def crear_usuario(self, id_usuario: int) -> bool:
         try:
             cursor = self.ejecutar(
                 """
@@ -18,16 +15,13 @@ class RepoUsuarios(AsistenteDeConsultas):
                 (id_usuario,),
             )
 
-            if cursor is not None and cursor.rowcount > 0:
-                return cursor.lastrowid
-            else:
-                return id_usuario
+            return cursor.rowcount > 0
 
         except sql.Error as e:
             logger.error(f"Error creando usuario {id_usuario}: {e}", exc_info=True)
             raise
 
-    def obtenerUsuario(self, id_usuario: int):
+    def obtener_usuario_por_id(self, id_usuario: int) -> sql.Row | None:
         try:
             return self.consulta_uno(
                 """
@@ -40,7 +34,7 @@ class RepoUsuarios(AsistenteDeConsultas):
             logger.error(f"Error obteniendo usuario {id_usuario}: {e}", exc_info=True)
             return None
 
-    def obtenerTodosUsuarios(self):
+    def obtener_usuarios(self) -> list[sql.Row]:
         try:
             return self.consulta_todos("""
                 SELECT * FROM usuarios;
@@ -50,7 +44,7 @@ class RepoUsuarios(AsistenteDeConsultas):
             logger.error(f"Error obteniendo todos los usuarios: {e}", exc_info=True)
             return []
 
-    def obtenerUsuariosInactivos(self, dias: int):
+    def obtener_usuarios_inactivos(self, dias: int) -> list[sql.Row]:
         try:
             return self.consulta_todos(
                 """
@@ -64,7 +58,7 @@ class RepoUsuarios(AsistenteDeConsultas):
             logger.error(f"Error obteniendo usuarios inactivos: {e}", exc_info=True)
             return []
 
-    def actualizarActividad(self, id_usuario: int):
+    def actualizar_actividad(self, id_usuario: int) -> bool:
         try:
             cursor = self.ejecutar(
                 """
@@ -73,7 +67,7 @@ class RepoUsuarios(AsistenteDeConsultas):
                 (id_usuario,),
             )
 
-            return cursor is not None and cursor.rowcount > 0
+            return cursor.rowcount > 0
 
         except sql.Error as e:
             logger.error(
@@ -82,7 +76,7 @@ class RepoUsuarios(AsistenteDeConsultas):
             )
             raise
 
-    def eliminarUsuario(self, id_usuario: int):
+    def eliminar_usuario(self, id_usuario: int) -> bool:
         try:
             cursor = self.ejecutar(
                 """
@@ -91,7 +85,7 @@ class RepoUsuarios(AsistenteDeConsultas):
                 (id_usuario,),
             )
 
-            return cursor is not None and cursor.rowcount > 0
+            return cursor.rowcount > 0
 
         except sql.Error as e:
             logger.error(f"Error eliminando usuario {id_usuario}: {e}", exc_info=True)

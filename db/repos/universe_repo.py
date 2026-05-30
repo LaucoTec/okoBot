@@ -7,9 +7,6 @@ from ..queries import AsistenteDeConsultas
 
 
 class RepoObras(AsistenteDeConsultas):
-    def __init__(self, conexion):
-        super().__init__(conexion)
-
     def crear_obra(self, nombre_obra: str, id_hilo: int) -> bool:
         try:
             nombre_normalizado = normalizar_texto(nombre_obra)
