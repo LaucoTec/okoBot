@@ -7,10 +7,7 @@ from ..queries import AsistenteDeConsultas
 
 
 class RepoReservas(AsistenteDeConsultas):
-    def __init__(self, conexion):
-        super().__init__(conexion)
-
-    def crearReserva(
+    def crear_reserva(
         self,
         id_propietario: int,
         nombre_personaje: str,
@@ -19,7 +16,7 @@ class RepoReservas(AsistenteDeConsultas):
         enlace_imagen: str,
         id_hilo: int,
         id_mensaje=None,
-    ):
+    ) -> int | None:
         try:
             nombre_normalizado = normalizar_texto(nombre_personaje)
             cursor = self.ejecutar(
@@ -39,7 +36,7 @@ class RepoReservas(AsistenteDeConsultas):
                 ),
             )
 
-            return cursor.lastrowid if cursor is not None else None
+            return cursor.lastrowid
 
         except sql.Error as e:
             logger.error(
@@ -48,7 +45,7 @@ class RepoReservas(AsistenteDeConsultas):
             )
             raise
 
-    def obtenerReserva(self, id_reserva: int):
+    def obtener_reserva_por_id(self, id_reserva: int) -> sql.Row | None:
         try:
             return self.consulta_uno(
                 """
@@ -61,7 +58,18 @@ class RepoReservas(AsistenteDeConsultas):
             logger.error(f"Error obteniendo reserva {id_reserva}: {e}", exc_info=True)
             return None
 
-    def obtenerReservaPorNombreNormalizado(self, nombre: str):
+    # TODO: Revisar si es necesaria esta función
+    def obtener_reservas(self) -> list[sql.Row]:
+        try:
+            return self.consulta_todos("""
+                SELECT * FROM reservas;
+            """)
+
+        except sql.Error as e:
+            logger.error(f"Error obteniendo todas las reservas: {e}", exc_info=True)
+            return []
+
+    def obtener_reserva_por_nombre_normalizado(self, nombre: str) -> sql.Row | None:
         try:
             nombre_normalizado = normalizar_texto(nombre)
             return self.consulta_uno(
@@ -78,7 +86,8 @@ class RepoReservas(AsistenteDeConsultas):
             )
             return None
 
-    def obtenerReservasPorNombreNormalizado(self, nombre: str):
+    # TODO: Verifica si esta función es necesaria
+    def obtener_reservas_por_nombre_normalizado(self, nombre: str) -> list[sql.Row]:
         try:
             nombre_normalizado = normalizar_texto(nombre)
             return self.consulta_todos(
@@ -95,7 +104,10 @@ class RepoReservas(AsistenteDeConsultas):
             )
             return []
 
-    def obtenerReservasSimilaresPorNombreNormalizado(self, nombre: str):
+    # TODO: Verifica si esta función es necesaria junto a la anterior
+    def obtener_reservas_similares_por_nombre_normalizado(
+        self, nombre: str
+    ) -> list[sql.Row]:
         try:
             nombre_normalizado = normalizar_texto(nombre)
             patron = f"%{nombre_normalizado}%"
@@ -113,7 +125,7 @@ class RepoReservas(AsistenteDeConsultas):
             )
             return []
 
-    def obtenerReservasPorUsuario(self, id_propietario: int):
+    def obtener_reservas_por_usuario(self, id_propietario: int) -> list[sql.Row]:
         try:
             return self.consulta_todos(
                 """
@@ -129,7 +141,7 @@ class RepoReservas(AsistenteDeConsultas):
             )
             return []
 
-    def obtenerReservasPorObra(self, id_obra: int):
+    def obtener_reservas_por_obra(self, id_obra: int) -> list[sql.Row]:
         try:
             return self.consulta_todos(
                 """
@@ -144,7 +156,9 @@ class RepoReservas(AsistenteDeConsultas):
             )
             return []
 
-    def obtenerReservasPorUsuarioEstado(self, id_propietario: int, estado: str):
+    def obtener_reservas_por_usuario_estado(
+        self, id_propietario: int, estado: str
+    ) -> list[sql.Row]:
         try:
             return self.consulta_todos(
                 """
@@ -160,7 +174,8 @@ class RepoReservas(AsistenteDeConsultas):
             )
             return []
 
-    def obtenerReservasPorExpiracion(self, fecha_expiracion: str):
+    # TODO: Revisar si se está usando realmente esta función
+    def obtener_reservas_por_expiracion(self, fecha_expiracion: str) -> list[sql.Row]:
         try:
             return self.consulta_todos(
                 """
@@ -176,7 +191,10 @@ class RepoReservas(AsistenteDeConsultas):
             )
             return []
 
-    def obtenerReservaPorNombreYObra(self, nombre: str, id_obra: int):
+    # TODO: Revisar si se está usando realmente esta función, parece muy específica
+    def obtener_reserva_por_nombre_y_obra(
+        self, nombre: str, id_obra: int
+    ) -> sql.Row | None:
         try:
             nombre_normalizado = normalizar_texto(nombre)
             return self.consulta_uno(
@@ -193,112 +211,7 @@ class RepoReservas(AsistenteDeConsultas):
             )
             return None
 
-    def renovarReserva(self, id_reserva: int, fecha_fin: str):
-        try:
-            cursor = self.ejecutar(
-                """
-                                   UPDATE reservas SET fecha_reserva = CURRENT_TIMESTAMP, fecha_expiracion = ?, fecha_estado = CURRENT_TIMESTAMP, estado = 'activa' WHERE id_reserva = ?;
-                                   """,
-                (fecha_fin, id_reserva),
-            )
-            return cursor is not None and cursor.rowcount > 0
-
-        except sql.Error as e:
-            logger.error(f"Error renovando la reserva {id_reserva}: {e}", exc_info=True)
-            raise
-
-    def actualizarEstadoReserva(self, id_reserva: int, nuevo_estado: str):
-        if nuevo_estado not in ("activa", "vencida", "por_expirar"):
-            logger.warning(f"Estado inválido para reserva {id_reserva}: {nuevo_estado}")
-            return False
-
-        try:
-            cursor = self.ejecutar(
-                """
-                UPDATE reservas SET estado = ?, fecha_estado = CURRENT_TIMESTAMP WHERE id_reserva = ?;
-            """,
-                (nuevo_estado, id_reserva),
-            )
-
-            return cursor is not None and cursor.rowcount > 0
-
-        except sql.Error as e:
-            logger.error(
-                f"Error actualizando estado de reserva {id_reserva}: {e}", exc_info=True
-            )
-            raise
-
-    def editarReserva(
-        self,
-        id_reserva: int,
-        nuevo_id_obra: int,
-        nuevo_id_hilo: int,
-        nuevo_id_mensaje: int,
-    ):
-        try:
-            cursor = self.ejecutar(
-                """
-                UPDATE reservas SET id_obra = ?, id_hilo = ?, id_mensaje = ? WHERE id_reserva = ?;
-            """,
-                (nuevo_id_obra, nuevo_id_hilo, nuevo_id_mensaje, id_reserva),
-            )
-
-            return cursor is not None and cursor.rowcount > 0
-
-        except sql.Error as e:
-            logger.error(
-                f"Error actualizando mensaje de reserva {id_reserva}: {e}",
-                exc_info=True,
-            )
-            raise
-
-    def editarMensajeIdReserva(self, id_reserva: int, nuevo_id_mensaje: int):
-        try:
-            cursor = self.ejecutar(
-                """
-                UPDATE reservas SET id_mensaje = ? WHERE id_reserva = ?;
-            """,
-                (nuevo_id_mensaje, id_reserva),
-            )
-
-            return cursor is not None and cursor.rowcount > 0
-
-        except sql.Error as e:
-            logger.error(
-                f"Error actualizando mensaje de reserva {id_reserva}: {e}",
-                exc_info=True,
-            )
-            raise
-
-    def editarObraIdReserva(self, id_reserva: int, nuevo_id_obra: int):
-        try:
-            cursor = self.ejecutar(
-                """
-                UPDATE reservas SET id_obra = ? WHERE id_reserva = ?;
-            """,
-                (nuevo_id_obra, id_reserva),
-            )
-
-            return cursor is not None and cursor.rowcount > 0
-
-        except sql.Error as e:
-            logger.error(
-                f"Error actualizando mensaje de reserva {id_reserva}: {e}",
-                exc_info=True,
-            )
-            raise
-
-    def obtenerTodasReservas(self):
-        try:
-            return self.consulta_todos("""
-                SELECT * FROM reservas;
-            """)
-
-        except sql.Error as e:
-            logger.error(f"Error obteniendo todas las reservas: {e}", exc_info=True)
-            return []
-
-    def obtenerReservasVencidasAntiguas(self, dias: int):
+    def obtener_reservas_vencidas_antiguas(self, dias: int) -> list[sql.Row]:
         try:
             return self.consulta_todos(
                 """
@@ -315,7 +228,107 @@ class RepoReservas(AsistenteDeConsultas):
             )
             return []
 
-    def marcarReservasVencidasPorUsuario(self, id_usuario: int):
+    def actualizar_expiracion_reserva(self, id_reserva: int, fecha_fin: str) -> bool:
+        try:
+            cursor = self.ejecutar(
+                """
+                UPDATE reservas SET fecha_reserva = CURRENT_TIMESTAMP, fecha_expiracion = ?, fecha_estado = CURRENT_TIMESTAMP, estado = 'activa' WHERE id_reserva = ?;
+            """,
+                (fecha_fin, id_reserva),
+            )
+            return cursor.rowcount > 0
+
+        except sql.Error as e:
+            logger.error(f"Error renovando la reserva {id_reserva}: {e}", exc_info=True)
+            raise
+
+    def actualizar_estado_reserva(self, id_reserva: int, nuevo_estado: str) -> bool:
+        if nuevo_estado not in ("activa", "vencida", "por_expirar"):
+            logger.warning(f"Estado inválido para reserva {id_reserva}: {nuevo_estado}")
+            return False
+
+        try:
+            cursor = self.ejecutar(
+                """
+                UPDATE reservas SET estado = ?, fecha_estado = CURRENT_TIMESTAMP WHERE id_reserva = ?;
+            """,
+                (nuevo_estado, id_reserva),
+            )
+
+            return cursor.rowcount > 0
+
+        except sql.Error as e:
+            logger.error(
+                f"Error actualizando estado de reserva {id_reserva}: {e}", exc_info=True
+            )
+            raise
+
+    def actualizar_obra_e_hilo(
+        self,
+        id_reserva: int,
+        nuevo_id_obra: int,
+        nuevo_id_hilo: int,
+        nuevo_id_mensaje: int,
+    ) -> bool:
+        try:
+            cursor = self.ejecutar(
+                """
+                UPDATE reservas SET id_obra = ?, id_hilo = ?, id_mensaje = ? WHERE id_reserva = ?;
+            """,
+                (nuevo_id_obra, nuevo_id_hilo, nuevo_id_mensaje, id_reserva),
+            )
+
+            return cursor.rowcount > 0
+
+        except sql.Error as e:
+            logger.error(
+                f"Error actualizando mensaje de reserva {id_reserva}: {e}",
+                exc_info=True,
+            )
+            raise
+
+    # TODO: Revisar si es redundante con la función anterior
+    def actualizar_mensaje_reserva(
+        self, id_reserva: int, nuevo_id_mensaje: int
+    ) -> bool:
+        try:
+            cursor = self.ejecutar(
+                """
+                UPDATE reservas SET id_mensaje = ? WHERE id_reserva = ?;
+            """,
+                (nuevo_id_mensaje, id_reserva),
+            )
+
+            return cursor.rowcount > 0
+
+        except sql.Error as e:
+            logger.error(
+                f"Error actualizando mensaje de reserva {id_reserva}: {e}",
+                exc_info=True,
+            )
+            raise
+
+    # TODO: Revisar si es redundante con la función anterior
+    def actualizar_obra_id_reserva(self, id_reserva: int, nuevo_id_obra: int) -> bool:
+        try:
+            cursor = self.ejecutar(
+                """
+                UPDATE reservas SET id_obra = ? WHERE id_reserva = ?;
+            """,
+                (nuevo_id_obra, id_reserva),
+            )
+
+            return cursor.rowcount > 0
+
+        except sql.Error as e:
+            logger.error(
+                f"Error actualizando mensaje de reserva {id_reserva}: {e}",
+                exc_info=True,
+            )
+            raise
+
+    # TODO: Refactorizar servicio para eliminar esta función
+    def marcarReservasVencidasPorUsuario(self, id_usuario: int) -> bool:
         try:
             cursor = self.ejecutar(
                 """
@@ -325,7 +338,7 @@ class RepoReservas(AsistenteDeConsultas):
                 (id_usuario,),
             )
 
-            return cursor is not None and cursor.rowcount
+            return cursor.rowcount > 0
 
         except sql.Error as e:
             logger.error(
@@ -334,7 +347,7 @@ class RepoReservas(AsistenteDeConsultas):
             )
             raise
 
-    def eliminarReservaDefinitiva(self, id_reserva: int):
+    def eliminar_reserva_definitiva(self, id_reserva: int) -> bool:
         try:
             cursor = self.ejecutar(
                 """
@@ -343,7 +356,7 @@ class RepoReservas(AsistenteDeConsultas):
                 (id_reserva,),
             )
 
-            return cursor is not None and cursor.rowcount > 0
+            return cursor.rowcount > 0
 
         except sql.Error as e:
             logger.error(
@@ -351,20 +364,3 @@ class RepoReservas(AsistenteDeConsultas):
                 exc_info=True,
             )
             raise
-
-    def obtenerAutorDeReserva(self, id_reserva: int):
-        try:
-            return self.consulta_uno(
-                """
-                SELECT u.* FROM usuarios u
-                JOIN reservas r ON u.id_usuario = r.id_propietario
-                WHERE r.id_reserva = ?;
-            """,
-                (id_reserva,),
-            )
-
-        except sql.Error as e:
-            logger.error(
-                f"Error obteniendo autor de reserva {id_reserva}: {e}", exc_info=True
-            )
-            return None
