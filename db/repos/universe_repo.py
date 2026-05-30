@@ -10,7 +10,7 @@ class RepoObras(AsistenteDeConsultas):
     def __init__(self, conexion):
         super().__init__(conexion)
 
-    def crearObra(self, nombre_obra: str, id_hilo: int):
+    def crear_obra(self, nombre_obra: str, id_hilo: int) -> bool:
         try:
             nombre_normalizado = normalizar_texto(nombre_obra)
             cursor = self.ejecutar(
@@ -20,16 +20,13 @@ class RepoObras(AsistenteDeConsultas):
                 (nombre_obra, nombre_normalizado, id_hilo),
             )
 
-            if cursor is not None and cursor.rowcount > 0:
-                return cursor.lastrowid
-            else:
-                return self.obtenerObraPorNombre(nombre_obra)["id_obra"]
+            return cursor.rowcount > 0
 
         except sql.Error as e:
             logger.error(f"Error creando obra '{nombre_obra}': {e}", exc_info=True)
             raise
 
-    def obtenerObra(self, id_obra: int):
+    def obtener_obra_por_id(self, id_obra: int) -> sql.Row | None:
         try:
             return self.consulta_uno(
                 """
@@ -42,7 +39,8 @@ class RepoObras(AsistenteDeConsultas):
             logger.error(f"Error obteniendo obra {id_obra}: {e}", exc_info=True)
             return None
 
-    def obtenerObras(self):
+    # TODO: Evaluar si esta función es necesaria
+    def obtener_obras(self) -> list[sql.Row]:
         try:
             return self.consulta_todos("""
                 SELECT * FROM obras ORDER BY nombre_obra;
@@ -52,7 +50,7 @@ class RepoObras(AsistenteDeConsultas):
             logger.error(f"Error obteniendo todas las obras: {e}", exc_info=True)
             return []
 
-    def obtenerObraPorNombre(self, nombre_obra: str):
+    def obtener_obra_por_nombre_normalizado(self, nombre_obra: str) -> sql.Row | None:
         try:
             nombre_normalizado = normalizar_texto(nombre_obra)
             return self.consulta_uno(
@@ -68,7 +66,8 @@ class RepoObras(AsistenteDeConsultas):
             )
             return None
 
-    def buscarObrasPorNombre(self, nombre_obra: str):
+    # TODO: Evaluar si esta función es necesaria
+    def buscar_obras_por_nombre_normalizado(self, nombre_obra: str) -> list[sql.Row]:
         try:
             nombre_normalizado = normalizar_texto(nombre_obra)
             return self.consulta_todos(
@@ -84,7 +83,7 @@ class RepoObras(AsistenteDeConsultas):
             )
             return []
 
-    def obtenerObraPorHilo(self, id_hilo: int):
+    def obtener_obra_por_hilo(self, id_hilo: int) -> sql.Row | None:
         try:
             return self.consulta_uno(
                 """
@@ -99,7 +98,8 @@ class RepoObras(AsistenteDeConsultas):
             )
             return None
 
-    def actualizarObra(self, id_obra: int, nombre_obra: str, id_hilo: int):
+    # TODO: Evaluar si esta función es necesaria
+    def actualizar_obra(self, id_obra: int, nombre_obra: str, id_hilo: int) -> bool:
         try:
             nombre_normalizado = normalizar_texto(nombre_obra)
             cursor = self.ejecutar(
@@ -109,13 +109,13 @@ class RepoObras(AsistenteDeConsultas):
                 (nombre_obra, nombre_normalizado, id_hilo, id_obra),
             )
 
-            return cursor is not None and cursor.rowcount > 0
+            return cursor.rowcount > 0
 
         except sql.Error as e:
             logger.error(f"Error actualizando obra {id_obra}: {e}", exc_info=True)
             raise
 
-    def eliminarObra(self, id_obra: int):
+    def eliminar_obra(self, id_obra: int) -> bool:
         try:
             cursor = self.ejecutar(
                 """
@@ -124,7 +124,7 @@ class RepoObras(AsistenteDeConsultas):
                 (id_obra,),
             )
 
-            return cursor is not None and cursor.rowcount > 0
+            return cursor.rowcount > 0
 
         except sql.Error as e:
             logger.error(f"Error eliminando obra {id_obra}: {e}", exc_info=True)
