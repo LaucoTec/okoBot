@@ -1,7 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 ZH_CDMX = ZoneInfo("America/Mexico_City")
+
+
+def generar_hora_cdmx(h: int, m: int, s: int) -> time:
+    return time(hour=h, minute=m, second=s, tzinfo=ZH_CDMX)
 
 
 def obtener_fecha_cdmx() -> datetime:

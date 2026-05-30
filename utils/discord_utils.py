@@ -4,7 +4,7 @@ from discord.ext import commands
 
 async def obtener_canal(
     bot: commands.Bot, canal_id: int
-) -> discord.abc.GuildChannel | discord.Thread | None:
+) -> discord.abc.GuildChannel | None:
 
     canal = bot.get_channel(canal_id)
 
@@ -15,7 +15,26 @@ async def obtener_canal(
         except discord.NotFound:
             return None
 
+    if not isinstance(canal, discord.abc.GuildChannel):
+        return None
+
     return canal
+
+
+async def obtener_hilo(bot: commands.Bot, hilo_id: int) -> discord.Thread | None:
+    hilo = bot.get_channel(hilo_id)
+
+    if hilo is None:
+        try:
+            hilo = await bot.fetch_channel(hilo_id)
+
+        except discord.NotFound:
+            return None
+
+    if not isinstance(hilo, discord.Thread):
+        return None
+
+    return hilo
 
 
 async def obtener_mensaje(
