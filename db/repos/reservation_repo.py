@@ -15,7 +15,8 @@ class RepoReservas(AsistenteDeConsultas):
         enlace_imagen: str,
         id_hilo: int,
         id_mensaje=None,
-    ) -> int | None:
+    ) -> bool:
+        """Crea una nueva reserva en la base de datos."""
         try:
             nombre_normalizado = normalizar_texto(nombre_personaje)
             cursor = self.ejecutar(
@@ -35,7 +36,7 @@ class RepoReservas(AsistenteDeConsultas):
                 ),
             )
 
-            return cursor.lastrowid
+            return cursor.rowcount > 0
 
         except sql.Error as e:
             logger.error(
@@ -45,6 +46,7 @@ class RepoReservas(AsistenteDeConsultas):
             raise
 
     def obtener_reserva_por_id(self, id_reserva: int) -> sql.Row | None:
+        """Obtiene una reserva por su ID."""
         try:
             return self.consulta_uno(
                 """
@@ -59,6 +61,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     # TODO: Revisar si es necesaria esta función
     def obtener_reservas(self) -> list[sql.Row]:
+        """Obtiene todas las reservas de la base de datos."""
         try:
             return self.consulta_todos("""
                 SELECT * FROM reservas;
@@ -69,6 +72,7 @@ class RepoReservas(AsistenteDeConsultas):
             return []
 
     def obtener_reserva_por_nombre_normalizado(self, nombre: str) -> sql.Row | None:
+        """Obtiene una reserva por su nombre normalizado. Devuelve la reserva más reciente si hay varias con el mismo nombre."""
         try:
             nombre_normalizado = normalizar_texto(nombre)
             return self.consulta_uno(
@@ -87,6 +91,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     # TODO: Verifica si esta función es necesaria
     def obtener_reservas_por_nombre_normalizado(self, nombre: str) -> list[sql.Row]:
+        """Obtiene todas las reservas que coinciden con el nombre normalizado, ordenadas por fecha de reserva descendente."""
         try:
             nombre_normalizado = normalizar_texto(nombre)
             return self.consulta_todos(
@@ -107,6 +112,7 @@ class RepoReservas(AsistenteDeConsultas):
     def obtener_reservas_similares_por_nombre_normalizado(
         self, nombre: str
     ) -> list[sql.Row]:
+        """Obtiene todas las reservas que contienen el nombre normalizado, ordenadas por fecha de reserva descendente."""
         try:
             nombre_normalizado = normalizar_texto(nombre)
             patron = f"%{nombre_normalizado}%"
@@ -125,6 +131,7 @@ class RepoReservas(AsistenteDeConsultas):
             return []
 
     def obtener_reservas_por_usuario(self, id_propietario: int) -> list[sql.Row]:
+        """Obtiene todas las reservas de un usuario específico, ordenadas por fecha de reserva descendente."""
         try:
             return self.consulta_todos(
                 """
@@ -141,6 +148,7 @@ class RepoReservas(AsistenteDeConsultas):
             return []
 
     def obtener_reservas_por_obra(self, id_obra: int) -> list[sql.Row]:
+        """Obtiene todas las reservas de una obra específica, ordenadas por fecha de reserva descendente."""
         try:
             return self.consulta_todos(
                 """
@@ -158,6 +166,7 @@ class RepoReservas(AsistenteDeConsultas):
     def obtener_reservas_por_usuario_estado(
         self, id_propietario: int, estado: str
     ) -> list[sql.Row]:
+        """Obtiene todas las reservas de un usuario específico con un estado determinado, ordenadas por fecha de reserva descendente."""
         try:
             return self.consulta_todos(
                 """
@@ -175,6 +184,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     # TODO: Revisar si se está usando realmente esta función
     def obtener_reservas_por_expiracion(self, fecha_expiracion: str) -> list[sql.Row]:
+        """Obtiene todas las reservas que expiran antes o en la fecha dada, ordenadas por fecha de expiración ascendente."""
         try:
             return self.consulta_todos(
                 """
@@ -194,6 +204,7 @@ class RepoReservas(AsistenteDeConsultas):
     def obtener_reserva_por_nombre_y_obra(
         self, nombre: str, id_obra: int
     ) -> sql.Row | None:
+        """Obtiene una reserva por su nombre normalizado y obra. Devuelve la reserva más reciente si hay varias con el mismo nombre y obra."""
         try:
             nombre_normalizado = normalizar_texto(nombre)
             return self.consulta_uno(
@@ -211,6 +222,7 @@ class RepoReservas(AsistenteDeConsultas):
             return None
 
     def obtener_reservas_vencidas_antiguas(self, dias: int) -> list[sql.Row]:
+        """Obtiene todas las reservas que están vencidas y expiraron hace más de 'dias' días, ordenadas por fecha de expiración ascendente."""
         try:
             return self.consulta_todos(
                 """
@@ -228,6 +240,7 @@ class RepoReservas(AsistenteDeConsultas):
             return []
 
     def actualizar_expiracion_reserva(self, id_reserva: int, fecha_fin: str) -> bool:
+        """Renueva la fecha de expiración de una reserva y la marca como activa."""
         try:
             cursor = self.ejecutar(
                 """
@@ -242,6 +255,7 @@ class RepoReservas(AsistenteDeConsultas):
             raise
 
     def actualizar_estado_reserva(self, id_reserva: int, nuevo_estado: str) -> bool:
+        """Actualiza el estado de una reserva. El nuevo estado debe ser 'activa', 'vencida' o 'por_expirar'."""
         if nuevo_estado not in ("activa", "vencida", "por_expirar"):
             logger.warning(f"Estado inválido para reserva {id_reserva}: {nuevo_estado}")
             return False
@@ -269,6 +283,7 @@ class RepoReservas(AsistenteDeConsultas):
         nuevo_id_hilo: int,
         nuevo_id_mensaje: int,
     ) -> bool:
+        """Actualiza el ID de obra, hilo y mensaje asociado a una reserva."""
         try:
             cursor = self.ejecutar(
                 """
@@ -290,6 +305,7 @@ class RepoReservas(AsistenteDeConsultas):
     def actualizar_mensaje_reserva(
         self, id_reserva: int, nuevo_id_mensaje: int
     ) -> bool:
+        """Actualiza el ID del mensaje asociado a una reserva."""
         try:
             cursor = self.ejecutar(
                 """
@@ -309,6 +325,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     # TODO: Revisar si es redundante con la función anterior
     def actualizar_obra_id_reserva(self, id_reserva: int, nuevo_id_obra: int) -> bool:
+        """Actualiza el ID de obra asociado a una reserva."""
         try:
             cursor = self.ejecutar(
                 """
@@ -328,6 +345,7 @@ class RepoReservas(AsistenteDeConsultas):
 
     # TODO: Refactorizar servicio para eliminar esta función
     def marcarReservasVencidasPorUsuario(self, id_usuario: int) -> bool:
+        """Marca todas las reservas activas de un usuario como vencidas. Devuelve True si se actualizó al menos una reserva."""
         try:
             cursor = self.ejecutar(
                 """
@@ -347,6 +365,7 @@ class RepoReservas(AsistenteDeConsultas):
             raise
 
     def eliminar_reserva_definitiva(self, id_reserva: int) -> bool:
+        """Elimina una reserva de la base de datos. Devuelve True si se eliminó una reserva."""
         try:
             cursor = self.ejecutar(
                 """
