@@ -2,9 +2,27 @@ import discord
 from discord.ext import commands
 
 
-async def obtener_canal(
+async def obtener_canal_server(
     bot: commands.Bot, canal_id: int
-) -> discord.abc.GuildChannel | None:
+) -> discord.guild.GuildChannel | None:
+    canal = bot.get_channel(canal_id)
+
+    if canal is None:
+        try:
+            canal = await bot.fetch_channel(canal_id)
+
+        except discord.NotFound:
+            return None
+
+    if not isinstance(canal, discord.guild.GuildChannel):
+        return None
+
+    return canal
+
+
+async def obtener_canal_mensajes(
+    bot: commands.Bot, canal_id: int
+) -> discord.TextChannel | discord.Thread | None:
 
     canal = bot.get_channel(canal_id)
 
@@ -15,7 +33,7 @@ async def obtener_canal(
         except discord.NotFound:
             return None
 
-    if not isinstance(canal, discord.abc.GuildChannel):
+    if not isinstance(canal, (discord.TextChannel, discord.Thread)):
         return None
 
     return canal
@@ -45,6 +63,15 @@ async def obtener_mensaje(
 
     except discord.NotFound:
         return None
+
+
+async def es_huerfano(id_mensaje: int, id_origen: int, bot: commands.Bot) -> bool:
+
+    origen = await obtener_canal_mensajes(bot, id_origen)
+    if origen is None:
+        return True
+
+    return await obtener_mensaje(origen, id_mensaje) is None
 
 
 def es_imagen(attachment: discord.Attachment) -> bool:

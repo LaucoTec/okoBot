@@ -64,12 +64,13 @@ def generico_log(
     accion: str,
     titulo: str,
     descripcion: str,
-    autor: User | Member,
-    id_operacion: int,
+    autor: User | Member | None,
+    id_operacion: int | str,
     miniatura: str | None = None,
 ) -> Embed:
     embed = Embed(title=titulo, description=descripcion)
-    embed.set_author(name=autor.display_name, icon_url=autor.display_avatar.url)
+    if autor is not None:
+        embed.set_author(name=autor.display_name, icon_url=autor.display_avatar.url)
     embed.timestamp = obtener_fecha_cdmx()
     embed.set_footer(text=f"ID: {id_operacion}")
 

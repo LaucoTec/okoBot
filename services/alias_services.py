@@ -6,7 +6,7 @@ from discord.ext.commands import Bot
 
 from config import ID_LOGS_OBRAS
 from db import BaseDeDatos
-from utils import obtener_canal
+from utils import obtener_canal_mensajes
 
 
 def servicio_alias_autocompletar_obra(
@@ -130,7 +130,7 @@ def servicio_alias_listar_aliases(
 
 async def servicio_alias_log(bot: Bot, embed_log: Embed, accion: str) -> bool:
 
-    canalLog = await obtener_canal(bot=bot, canal_id=ID_LOGS_OBRAS)
+    canalLog = await obtener_canal_mensajes(bot=bot, canal_id=ID_LOGS_OBRAS)
     if isinstance(canalLog, Messageable):
         if accion == "CREATE":
             mensaje = "Alias creado."

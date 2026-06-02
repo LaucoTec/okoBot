@@ -1,5 +1,10 @@
 from discord.ext import commands, tasks
 
+from logs.loggers.bot_logger import logger as bot_logger
+from services.daily_tasks_services import (
+    servicio_integridad_ids,
+    servicio_log_integridad_ids,
+)
 from utils.time_utils import generar_hora_cdmx
 
 # Medianoche hora CDMX
@@ -9,12 +14,12 @@ mensuales = generar_hora_cdmx(0, 0, 0)
 
 class TareasCog(commands.Cog):
     """
-    Cog para gestionar tareas programadas diarias y mensuales. Se encarga de:
-    - Diarias: Actualizar obras del foro, actualizar estados de reservas por expiración,
-    eliminar registros con IDs inválidos, borrar hilos de fichas eliminadas
-    hace más de 7 días, eliminar reservas vencidas antiguas.
-    - Mensuales: Eliminar usuarios que abandonaron el servidor, marcar fichas
-    y reservas de usuarios inactivos como eliminadas/vencidas.
+    Coordina la ejecución periódica de tareas automáticas
+    del bot mediante servicios especializados. Divididas
+    en tareas diarias y mensuales, se encargan de realizar
+    acciones como enviar mensajes programados, limpiar datos
+    antiguos, o cualquier otra función que requiera ejecución
+    periódica sin intervención manual.
     """
 
     def __init__(self, bot):
@@ -28,7 +33,16 @@ class TareasCog(commands.Cog):
 
     # Se ejecuta diariamente a las 00:01 hora CDMX
     @tasks.loop(time=diarias)
-    async def Diarias(self): ...  # Lógica para tareas diarias
+    async def Diarias(self):
+        bot_logger.info("Ejecutando tareas diarias...")
+
+        try:
+            # Ejecutar la tarea de integridad de IDs
+            resultado_integridad = await servicio_integridad_ids(self.bot)
+            await servicio_log_integridad_ids(self.bot, resultado_integridad)
+
+        except Exception as e:
+            bot_logger.error(f"Error al ejecutar tareas diarias: {e}")
 
     # Se ejecuta mensualmente el día 1 a las 00:00 hora CDMX
     @tasks.loop(time=mensuales)

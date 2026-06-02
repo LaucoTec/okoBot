@@ -146,7 +146,7 @@ class TareasProgramadas(commands.Cog):
 
         eliminadas = 0
         embed = discord.Embed(
-            title=f"Reservas Eliminadas por Vencimiento",
+            title="Reservas Eliminadas por Vencimiento",
             description=f"Reservas vencidas hace más de {dias} días",
             color=discord.Color.red(),
             timestamp=datetime.now(ZoneInfo("America/Mexico_City")),
