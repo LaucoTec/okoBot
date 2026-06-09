@@ -1,10 +1,9 @@
 import discord
+from discord.abc import GuildChannel
 from discord.ext import commands
 
 
-async def obtener_canal_server(
-    bot: commands.Bot, canal_id: int
-) -> discord.guild.GuildChannel | None:
+async def obtener_canal_server(bot: commands.Bot, canal_id: int) -> GuildChannel | None:
     canal = bot.get_channel(canal_id)
 
     if canal is None:
@@ -14,7 +13,7 @@ async def obtener_canal_server(
         except discord.NotFound:
             return None
 
-    if not isinstance(canal, discord.guild.GuildChannel):
+    if not isinstance(canal, GuildChannel):
         return None
 
     return canal

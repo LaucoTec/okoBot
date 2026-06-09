@@ -421,7 +421,3 @@ class TareasProgramadas(commands.Cog):
             logger.error(
                 f"Error enviando advertencia a usuario {id_usuario}: {e}", exc_info=True
             )
-
-
-async def setup(bot):
-    await bot.add_cog(TareasProgramadas(bot))

@@ -7,6 +7,11 @@ from services.tasks.integrity_task import (
     integridad_ids_fichas,
     integridad_ids_reservas,
 )
+from services.tasks.reservation_state_task import (
+    ResultadoActualizacionEstado,
+    actualizar_mensajes_estado_reserva,
+    detectar_cambios_estado_reserva,
+)
 from utils.discord_utils import obtener_canal_mensajes
 
 
@@ -16,18 +21,16 @@ async def servicio_integridad_ids(bot: OkoBot) -> ResultadoIntegridad:
     Parámetros:
     - bot: Instancia del bot OkoBot
     Retorna:
-    - Un diccionario con dos listas: "fichas_invalidas" y "reservas_invalidas"
+    - Un objeto ResultadoIntegridad con dos listas: "fichas_invalidas" y "reservas_invalidas"
     """
 
     bot_logger.info("Iniciando tarea de integridad de IDs")
     resultado = ResultadoIntegridad(fichas_invalidas=[], reservas_invalidas=[])
 
-    # Validar fichas
     fichas_invalidas = await integridad_ids_fichas(bot)
     resultado.fichas_invalidas = fichas_invalidas
     bot_logger.info(f"Fichas eliminadas: {len(fichas_invalidas)}")
 
-    # Validar reservas
     reservas_invalidas = await integridad_ids_reservas(bot)
     resultado.reservas_invalidas = reservas_invalidas
     bot_logger.info(f"Reservas eliminadas: {len(reservas_invalidas)}")
@@ -49,6 +52,12 @@ async def servicio_integridad_ids(bot: OkoBot) -> ResultadoIntegridad:
 async def servicio_log_integridad_ids(
     bot: OkoBot, resultado: ResultadoIntegridad
 ) -> None:
+    """
+    Envía logs de la tarea de integridad de IDs a los canales correspondientes.
+    Parámetros:
+    - bot: Instancia del bot OkoBot
+    - resultado: Objeto ResultadoIntegridad con los registros eliminados
+    """
     embed_fichas, embed_reservas = log_integridad_ids(registros=resultado)
 
     canal_fichas = await obtener_canal_mensajes(bot, ID_LOGS_FICHAS)
@@ -71,3 +80,41 @@ async def servicio_log_integridad_ids(
         bot_logger.warning(
             f"No se encontró el canal de logs de reservas con ID {ID_LOGS_RESERVAS}"
         )
+
+
+async def servicio_actualizar_estados_reservas(
+    bot: OkoBot,
+) -> ResultadoActualizacionEstado:
+    """
+    Ejecuta la tarea de actualización de estados de reservas, que verifica las fechas de expiración y actualiza el estado de cada reserva a "Por Expirar" o "Vencida" según corresponda.
+    Parámetros:
+    - bot: Instancia del bot OkoBot
+    Retorna:
+    - Un objeto ResultadoActualizacionEstado con listas de reservas por expirar, vencidas y un conteo de reservas sin cambios.
+    """
+    bot_logger.info("Iniciando tarea de actualización estados de reserva")
+    resultado = detectar_cambios_estado_reserva(bot.bd)
+
+    # Actualizar estados en la base de datos
+    for cambio in resultado.reservas_por_expirar + resultado.reservas_vencidas:
+        bot.bd.reservas.actualizar_estado_reserva(
+            cambio.id_reserva, cambio.estado_nuevo.value
+        )
+        audit_logger.info(
+            f"Reserva ID {cambio.id_reserva} - '{cambio.nombre_reserva}' actualizada de estado '{cambio.estado_actual}' a '{cambio.estado_nuevo.value}'"
+        )
+
+    # Actualizar mensajes en Discord
+    contador_fallos = await actualizar_mensajes_estado_reserva(resultado, bot)
+    if contador_fallos > 0:
+        bot_logger.warning(
+            f"Hubo {contador_fallos} fallos al actualizar mensajes de reservas por expirar/vencidas."
+        )
+
+    return resultado
+
+
+async def servicio_log_actualizar_estados_reservas(
+    bot: OkoBot, resultado: ResultadoActualizacionEstado
+) -> None:
+    pass
