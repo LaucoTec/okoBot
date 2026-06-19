@@ -101,15 +101,15 @@ class RepoObras(AsistenteDeConsultas):
             return None
 
     # TODO: Evaluar si esta función es necesaria
-    def actualizar_obra(self, id_obra: int, nombre_obra: str, id_hilo: int) -> bool:
+    def actualizar_obra(self, id_obra: int, nombre_obra: str) -> bool:
         """Actualiza el nombre y el ID de hilo de una obra. Devuelve True si se actualizó la obra, o False si no se encontró ninguna obra con ese ID."""
         try:
             nombre_normalizado = normalizar_texto(nombre_obra)
             cursor = self.ejecutar(
                 """
-                UPDATE obras SET nombre_obra = ?, nombre_normalizado = ?, id_hilo = ? WHERE id_obra = ?;
+                UPDATE obras SET nombre_obra = ?, nombre_normalizado = ? WHERE id_obra = ?;
             """,
-                (nombre_obra, nombre_normalizado, id_hilo, id_obra),
+                (nombre_obra, nombre_normalizado, id_obra),
             )
 
             return cursor.rowcount > 0

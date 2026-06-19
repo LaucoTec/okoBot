@@ -1,5 +1,5 @@
-from config import ID_LOGS_FICHAS, ID_LOGS_RESERVAS, OkoBot
-from embeds.task_embeds import log_integridad_ids
+from config import ID_LOGS_FICHAS, ID_LOGS_OBRAS, ID_LOGS_RESERVAS, OkoBot
+from embeds.task_embeds import log_integridad_ids, log_sincronizacion_obras
 from logs.loggers.audit_logger import logger as audit_logger
 from logs.loggers.bot_logger import logger as bot_logger
 from services.tasks.integrity_task import (
@@ -11,6 +11,10 @@ from services.tasks.reservation_state_task import (
     ResultadoActualizacionEstado,
     actualizar_mensajes_estado_reserva,
     detectar_cambios_estado_reserva,
+)
+from services.tasks.universes_update_task import (
+    ResultadoSincronizacionObras,
+    detectar_actualizaciones_obras,
 )
 from utils.discord_utils import obtener_canal_mensajes
 
@@ -118,3 +122,64 @@ async def servicio_log_actualizar_estados_reservas(
     bot: OkoBot, resultado: ResultadoActualizacionEstado
 ) -> None:
     pass
+
+
+async def servicio_sincronizar_obras(bot: OkoBot) -> ResultadoSincronizacionObras:
+
+    bot_logger.info("Iniciando tarea de sincronización de obras")
+    resultado = await detectar_actualizaciones_obras(bot=bot)
+
+    for creada in resultado.obras_creadas:
+        bot.bd.obras.crear_obra(nombre_obra=creada.nombre, id_hilo=creada.id_hilo)
+        audit_logger.info(f"Obra {creada.nombre} creada")
+
+    for actualizada in resultado.obras_actualizadas:
+        bot.bd.obras.actualizar_obra(
+            id_obra=actualizada.id_obra, nombre_obra=actualizada.nombre_nuevo
+        )
+        audit_logger.info(
+            f"Obra {actualizada.nombre_anterior} actualizada con el nombre {actualizada.nombre_nuevo}"
+        )
+
+    for eliminada in resultado.obras_eliminadas:
+        bot.bd.obras.eliminar_obra(id_obra=eliminada.id_obra)
+        audit_logger.info(
+            f"Obra {eliminada.nombre} con id {eliminada.id_obra} eliminada"
+        )
+
+    return resultado
+
+
+async def servicio_log_sincronizar_obras(
+    bot: OkoBot, resultado: ResultadoSincronizacionObras
+) -> None:
+
+    embed_creadas, embed_actualizadas, embed_eliminadas = log_sincronizacion_obras(
+        registros=resultado
+    )
+
+    canal = await obtener_canal_mensajes(bot=bot, canal_id=ID_LOGS_OBRAS)
+
+    if canal:
+        if resultado.obras_creadas:
+            await canal.send(
+                content="Tarea Sincronización de Obras - Obras Creadas.",
+                embed=embed_creadas,
+            )
+
+        if resultado.obras_actualizadas:
+            await canal.send(
+                content="Tarea Sincronización de Obras - Obras Actualizadas.",
+                embed=embed_actualizadas,
+            )
+
+        if resultado.obras_eliminadas:
+            await canal.send(
+                content="Tarea Sincronización de Obras - Obras Eliminadas.",
+                embed=embed_eliminadas,
+            )
+
+    else:
+        bot_logger.warning(
+            f"No se encontró el canal de logs de obras con ID {ID_LOGS_OBRAS}"
+        )

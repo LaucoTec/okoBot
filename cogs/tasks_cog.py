@@ -7,6 +7,8 @@ from services.daily_tasks_services import (
     servicio_integridad_ids,
     servicio_log_actualizar_estados_reservas,
     servicio_log_integridad_ids,
+    servicio_log_sincronizar_obras,
+    servicio_sincronizar_obras,
 )
 from utils.time_utils import generar_hora_cdmx
 
@@ -25,7 +27,7 @@ class TareasCog(commands.Cog):
     periódica sin intervención manual.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: OkoBot):
         self.bot = bot
         self.tareas_diarias.start()
         self.tareas_mensuales.start()
@@ -55,6 +57,17 @@ class TareasCog(commands.Cog):
                 exc_info=True,
             )
 
+    async def tarea_sincronizacion_obras(self):
+        try:
+            resultado_sincronizacion = await servicio_sincronizar_obras(bot=self.bot)
+            await servicio_log_sincronizar_obras(
+                bot=self.bot, resultado=resultado_sincronizacion
+            )
+        except Exception as e:
+            bot_logger.error(
+                f"Error al ejecutar tarea de sinronización de obras: {e}", exc_info=True
+            )
+
     # Se ejecuta diariamente a las 00:01 hora CDMX
     @tasks.loop(time=diarias)
     async def tareas_diarias(self):
@@ -63,6 +76,7 @@ class TareasCog(commands.Cog):
         # Ejecutar la tarea de integridad de IDs
         await self.tarea_integridad_ids()
         await self.tarea_estado_reservas()
+        await self.tarea_sincronizacion_obras()
 
     # Se ejecuta mensualmente el día 1 a las 00:00 hora CDMX
     @tasks.loop(time=mensuales)

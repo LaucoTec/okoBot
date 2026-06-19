@@ -58,7 +58,7 @@ def iniciar_bd(conn: Connection):
             id_propietario INTEGER NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
             nombre_personaje TEXT NOT NULL,
             nombre_normalizado TEXT NOT NULL,
-            id_obra INTEGER NOT NULL REFERENCES obras(id_obra),
+            id_obra INTEGER NOT NULL REFERENCES obras(id_obra) ON DELETE CASCADE,
             fecha_reserva TEXT DEFAULT CURRENT_TIMESTAMP,
             fecha_expiracion TEXT NOT NULL,
             fecha_estado TEXT DEFAULT CURRENT_TIMESTAMP,
