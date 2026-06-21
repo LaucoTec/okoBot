@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from discord import ForumChannel
 
-from config import ID_REPOSITORIO, OkoBot
+from config import ID_RESERVAS, OkoBot
 from utils.discord_utils import obtener_canal_server
 
 
@@ -52,7 +52,7 @@ async def detectar_actualizaciones_obras(bot: OkoBot) -> ResultadoSincronizacion
         obras_creadas=[], obras_eliminadas=[], obras_actualizadas=[]
     )
 
-    canal = await obtener_canal_server(bot=bot, canal_id=ID_REPOSITORIO)
+    canal = await obtener_canal_server(bot=bot, canal_id=ID_RESERVAS)
     if not canal or not isinstance(canal, ForumChannel):
         raise ValueError("No se encontró el canal de foro indicado.")
 

@@ -36,8 +36,32 @@ def log_integridad_ids(
     return embed_fichas, embed_reservas
 
 
-def log_estados_reservas(registros: ResultadoActualizacionEstado) -> None:
-    pass
+def log_estados_reservas(
+    registros: ResultadoActualizacionEstado,
+) -> tuple[Embed, Embed]:
+
+    embed_por_expirar = generico_log(
+        accion="EDIT",
+        titulo="Tarea Actualización Estados Reservas - Fichas por expirar hoy",
+        descripcion="".join(
+            f"- ID reserva: {reserva.id_reserva}, Nombre: {reserva.nombre_reserva}"
+            for reserva in registros.reservas_por_expirar
+        ),
+        autor=None,
+        id_operacion="N/A",
+    )
+    embed_expiradas = generico_log(
+        accion="EDIT",
+        titulo="Tarea Actualización Estados Reservas - Fichas vencidas hoy",
+        descripcion="".join(
+            f"- ID reserva: {reserva.id_reserva}, Nombre: {reserva.nombre_reserva}"
+            for reserva in registros.reservas_vencidas
+        ),
+        autor=None,
+        id_operacion="N/A",
+    )
+
+    return embed_por_expirar, embed_expiradas
 
 
 def log_sincronizacion_obras(
