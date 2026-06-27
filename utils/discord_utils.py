@@ -1,6 +1,17 @@
-import discord
+from discord import Attachment, Message, NotFound, TextChannel, Thread, User
 from discord.abc import GuildChannel
 from discord.ext import commands
+
+
+async def obtener_usuario(bot: commands.Bot, usuario_id: int) -> User | None:
+    usuario = bot.get_user(usuario_id)
+
+    if usuario is None:
+        try:
+            usuario = await bot.fetch_user(usuario_id)
+
+        except NotFound:
+            return None
 
 
 async def obtener_canal_server(bot: commands.Bot, canal_id: int) -> GuildChannel | None:
@@ -10,7 +21,7 @@ async def obtener_canal_server(bot: commands.Bot, canal_id: int) -> GuildChannel
         try:
             canal = await bot.fetch_channel(canal_id)
 
-        except discord.NotFound:
+        except NotFound:
             return None
 
     if not isinstance(canal, GuildChannel):
@@ -21,7 +32,7 @@ async def obtener_canal_server(bot: commands.Bot, canal_id: int) -> GuildChannel
 
 async def obtener_canal_mensajes(
     bot: commands.Bot, canal_id: int
-) -> discord.TextChannel | discord.Thread | None:
+) -> TextChannel | Thread | None:
 
     canal = bot.get_channel(canal_id)
 
@@ -29,38 +40,22 @@ async def obtener_canal_mensajes(
         try:
             canal = await bot.fetch_channel(canal_id)
 
-        except discord.NotFound:
+        except NotFound:
             return None
 
-    if not isinstance(canal, (discord.TextChannel, discord.Thread)):
+    if not isinstance(canal, (TextChannel, Thread)):
         return None
 
     return canal
 
 
-async def obtener_hilo(bot: commands.Bot, hilo_id: int) -> discord.Thread | None:
-    hilo = bot.get_channel(hilo_id)
-
-    if hilo is None:
-        try:
-            hilo = await bot.fetch_channel(hilo_id)
-
-        except discord.NotFound:
-            return None
-
-    if not isinstance(hilo, discord.Thread):
-        return None
-
-    return hilo
-
-
 async def obtener_mensaje(
-    canal: discord.TextChannel | discord.Thread, mensaje_id: int
-) -> discord.Message | None:
+    canal: TextChannel | Thread, mensaje_id: int
+) -> Message | None:
     try:
         return await canal.fetch_message(mensaje_id)
 
-    except discord.NotFound:
+    except NotFound:
         return None
 
 
@@ -73,7 +68,7 @@ async def es_huerfano(id_mensaje: int, id_origen: int, bot: commands.Bot) -> boo
     return await obtener_mensaje(origen, id_mensaje) is None
 
 
-def es_imagen(attachment: discord.Attachment) -> bool:
+def es_imagen(attachment: Attachment) -> bool:
     return bool(
         attachment.content_type and attachment.content_type.startswith("image/")
     )
