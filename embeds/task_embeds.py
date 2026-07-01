@@ -1,6 +1,6 @@
 from discord import Embed
 
-from embeds.embed_base import generico_log
+from embeds.embed_base import AccionesLogs, generico_log
 from services.tasks.integrity_task import ResultadoIntegridad
 from services.tasks.reservation_state_task import ResultadoActualizacionEstado
 from services.tasks.universes_update_task import ResultadoSincronizacionObras
@@ -12,7 +12,7 @@ def log_integridad_ids(
     fichas_eliminadas = len(registros.fichas_invalidas)
     reservas_eliminadas = len(registros.reservas_invalidas)
     embed_fichas = generico_log(
-        accion="DELETE",
+        accion=AccionesLogs.DELETE,
         titulo=f"Se eliminaron {fichas_eliminadas} fichas porque sus mensajes y/o hilos ya no existen.",
         descripcion="".join(
             f"- ID Ficha: {registro.id_registro}, Nombre ficha: {registro.nombre}\n"
@@ -23,7 +23,7 @@ def log_integridad_ids(
     )
 
     embed_reservas = generico_log(
-        accion="DELETE",
+        accion=AccionesLogs.DELETE,
         titulo=f"Se eliminaron {reservas_eliminadas} reservas porque sus mensajes y/o obras ya no existen.",
         descripcion="".join(
             f"- ID Reserva: {registro.id_registro}, Nombre reserva: {registro.nombre}\n"
@@ -41,7 +41,7 @@ def log_estados_reservas(
 ) -> tuple[Embed, Embed]:
 
     embed_por_expirar = generico_log(
-        accion="EDIT",
+        accion=AccionesLogs.EDIT,
         titulo="Tarea Actualización Estados Reservas - Fichas por expirar hoy",
         descripcion="".join(
             f"- ID reserva: {reserva.id_reserva}, Nombre: {reserva.nombre_reserva}"
@@ -51,7 +51,7 @@ def log_estados_reservas(
         id_operacion="N/A",
     )
     embed_expiradas = generico_log(
-        accion="EDIT",
+        accion=AccionesLogs.EDIT,
         titulo="Tarea Actualización Estados Reservas - Fichas vencidas hoy",
         descripcion="".join(
             f"- ID reserva: {reserva.id_reserva}, Nombre: {reserva.nombre_reserva}"
@@ -73,7 +73,7 @@ def log_sincronizacion_obras(
     obras_eliminadas = len(registros.obras_eliminadas)
 
     embed_creadas = generico_log(
-        accion="CREATE",
+        accion=AccionesLogs.CREATE,
         titulo=f"Se crearon {obras_creadas} en la base de datos.",
         descripcion="".join(
             f"-ID hilo: {creada.id_hilo}, Nombre obra: {creada.nombre}\n"
@@ -84,7 +84,7 @@ def log_sincronizacion_obras(
     )
 
     embed_actualizadas = generico_log(
-        accion="EDIT",
+        accion=AccionesLogs.EDIT,
         titulo=f"Se actualizaron {obras_actualizadas} en la base de datos.",
         descripcion="".join(
             f"- ID: {actualizada.id_obra}, Nombre: ~~{actualizada.nombre_anterior}~~ -> **{actualizada.nombre_nuevo}**\n"
@@ -95,7 +95,7 @@ def log_sincronizacion_obras(
     )
 
     embed_eliminadas = generico_log(
-        accion="DELETE",
+        accion=AccionesLogs.DELETE,
         titulo=f"Se eliminaron {obras_eliminadas} en la base de datos.",
         descripcion="".join(
             f"- ID: {eliminada.id_obra} ,Nombre obra: {eliminada.nombre}\n"

@@ -91,7 +91,7 @@ def iniciar_bd(conn: Connection):
         """CREATE INDEX IF NOT EXISTS idx_reservas_id_obra ON reservas(id_obra);"""
     )
 
-    # Índices para optimizar consultas por propietario
+    # Índices para consultas por propietario
     conn.execute(
         """CREATE INDEX IF NOT EXISTS idx_fichas_propietario ON fichas(id_propietario);"""
     )
@@ -107,9 +107,17 @@ def iniciar_bd(conn: Connection):
         """CREATE INDEX IF NOT EXISTS idx_reservas_propietario_estado ON reservas(id_propietario, estado);"""
     )
 
-    # Índices para búsquedas por expiración
+    # Índices para búsquedas por fechas
     conn.execute(
         """CREATE INDEX IF NOT EXISTS idx_reservas_expiracion ON reservas(fecha_expiracion);"""
+    )
+
+    conn.execute(
+        """CREATE INDEX IF NOT EXISTS idx_reservas_estado_fecha ON reservas(estado, fecha_estado);"""
+    )
+
+    conn.execute(
+        """CREATE INDEX IF NOT EXISTS idx_fichas_estado_fecha ON fichas(estado, fecha_estado);"""
     )
 
     # Guardar cambios

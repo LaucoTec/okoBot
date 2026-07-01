@@ -1,21 +1,37 @@
+from enum import StrEnum
+
 from discord import Color, Embed, Member, User
 
 from utils import obtener_fecha_cdmx
 
+
+class AccionesComandos(StrEnum):
+    SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
+    CONFIRM = "CONFIRM"
+    CANCEL = "CANCEL"
+
+
+class AccionesLogs(StrEnum):
+    CREATE = "CREATE"
+    EDIT = "EDIT"
+    DELETE = "DELETE"
+
+
 # Colores de comandos
 COMMAND_COLOR = {
-    "SUCCESS": Color.brand_green(),
-    "ERROR": Color.greyple(),
-    "CONFIRM": Color.teal(),
-    "CANCEL": Color.dark_red(),
+    AccionesComandos.SUCCESS: Color.brand_green(),
+    AccionesComandos.ERROR: Color.greyple(),
+    AccionesComandos.CONFIRM: Color.teal(),
+    AccionesComandos.CANCEL: Color.dark_red(),
 }
 # Color de advertencia
 WARNING_COLOR = Color.dark_orange()
 # Colores de logs
 LOG_COLOR = {
-    "CREATE": Color.yellow(),
-    "EDIT": Color.pink(),
-    "DELETE": Color.brand_red(),
+    AccionesLogs.CREATE: Color.yellow(),
+    AccionesLogs.EDIT: Color.pink(),
+    AccionesLogs.DELETE: Color.brand_red(),
 }
 
 
@@ -24,7 +40,7 @@ def generico_exito(mensaje: str) -> Embed:
     return Embed(
         title="Operación completada",
         description=mensaje,
-        color=COMMAND_COLOR["SUCCESS"],
+        color=COMMAND_COLOR[AccionesComandos.SUCCESS],
     )
 
 
@@ -32,13 +48,15 @@ def generico_error(comando: str, motivo: str) -> Embed:
     return Embed(
         title=f"Error ejecutando {comando}",
         description=motivo,
-        color=COMMAND_COLOR["ERROR"],
+        color=COMMAND_COLOR[AccionesComandos.ERROR],
     )
 
 
 def generico_confirmar(peticion: str) -> Embed:
     return Embed(
-        title="¿Desea continuar?", description=peticion, color=COMMAND_COLOR["CONFIRM"]
+        title="¿Desea continuar?",
+        description=peticion,
+        color=COMMAND_COLOR[AccionesComandos.CONFIRM],
     )
 
 
@@ -46,7 +64,7 @@ def generico_cancelar(comando: str) -> Embed:
     return Embed(
         title=comando,
         description="La operación se ha cancelado.",
-        color=COMMAND_COLOR["CANCEL"],
+        color=COMMAND_COLOR[AccionesComandos.CANCEL],
     )
 
 
@@ -61,13 +79,14 @@ def generico_advertencia(mensaje: str) -> Embed:
 
 # ---Logs---
 def generico_log(
-    accion: str,
+    accion: AccionesLogs,
     titulo: str,
     descripcion: str,
     autor: User | Member | None,
     id_operacion: int | str,
     miniatura: str | None = None,
 ) -> Embed:
+
     embed = Embed(title=titulo, description=descripcion)
     if autor is not None:
         embed.set_author(name=autor.display_name, icon_url=autor.display_avatar.url)
@@ -77,9 +96,6 @@ def generico_log(
     if miniatura is not None:
         embed.set_thumbnail(url=miniatura)
 
-    try:
-        embed.color = LOG_COLOR[accion]
-    except KeyError:
-        raise ValueError(f"Acción no válida {accion}")
+    embed.color = LOG_COLOR[accion]
 
     return embed

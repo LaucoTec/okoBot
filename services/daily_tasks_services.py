@@ -8,8 +8,7 @@ from logs.loggers.audit_logger import logger as audit_logger
 from logs.loggers.bot_logger import logger as bot_logger
 from services.tasks.integrity_task import (
     ResultadoIntegridad,
-    integridad_ids_fichas,
-    integridad_ids_reservas,
+    detectar_integridad_ids,
 )
 from services.tasks.reservation_state_task import (
     ResultadoActualizacionEstado,
@@ -33,11 +32,8 @@ async def servicio_integridad_ids(bot: OkoBot) -> ResultadoIntegridad:
     """
 
     bot_logger.info("--Iniciando tarea de integridad de IDs--")
-    resultado = ResultadoIntegridad(fichas_invalidas=[], reservas_invalidas=[])
 
-    resultado.fichas_invalidas = await integridad_ids_fichas(bot)
-
-    resultado.reservas_invalidas = await integridad_ids_reservas(bot)
+    resultado = await detectar_integridad_ids(bot=bot)
 
     for registro in resultado.fichas_invalidas:
         bot.bd.fichas.eliminar_ficha_definitivo(registro.id_registro)
@@ -62,6 +58,7 @@ async def servicio_log_integridad_ids(
 
     bot_logger.info(f"Fichas eliminadas: {fichas_eliminadas}")
     bot_logger.info(f"Reservas eliminadas: {reservas_eliminadas}")
+    bot_logger.info(f"Registros sin cambios: {resultado.registros_sin_cambio}")
 
     embed_fichas, embed_reservas = log_integridad_ids(registros=resultado)
     if fichas_eliminadas:
@@ -138,14 +135,14 @@ async def servicio_log_actualizar_estados_reservas(
     reservas_por_expirar = len(resultado.reservas_por_expirar)
     reservas_expiradas = len(resultado.reservas_vencidas)
 
+    bot_logger.info(f"Reservas por expirar: {reservas_por_expirar}")
+    bot_logger.info(f"Reservas expiradas: {reservas_expiradas}")
+    bot_logger.info(f"Reservas sin cambios: {resultado.reservas_no_cambiadas}")
+
     for cambio in resultado.reservas_por_expirar + resultado.reservas_vencidas:
         audit_logger.info(
             f"Reserva ID {cambio.id_reserva} - '{cambio.nombre_reserva}' actualizada de estado '{cambio.estado_actual}' a '{cambio.estado_nuevo.value}'"
         )
-
-    bot_logger.info(f"Reservas por expirar: {reservas_por_expirar}")
-    bot_logger.info(f"Reservas expiradas: {reservas_expiradas}")
-    bot_logger.info(f"Reservas sin cambios: {resultado.reservas_no_cambiadas}")
 
     embed_por_expirar, embed_vencidas = log_estados_reservas(registros=resultado)
 
@@ -160,14 +157,14 @@ async def servicio_log_actualizar_estados_reservas(
         await canal.send(content="Reservas actualizadas.", embed=embed_por_expirar)
 
     if resultado.reservas_vencidas:
-        await canal.send(content="Reservas actualizadas.", embed=embed_por_expirar)
+        await canal.send(content="Reservas actualizadas.", embed=embed_vencidas)
 
     bot_logger.info("--Tarea actualización estados reservas finalizada--")
 
 
 async def servicio_sincronizar_obras(bot: OkoBot) -> ResultadoSincronizacionObras:
 
-    bot_logger.info("Iniciando tarea de sincronización de obras")
+    bot_logger.info("--Iniciando tarea de sincronización de obras--")
     resultado = await detectar_actualizaciones_obras(bot=bot)
 
     for creada in resultado.obras_creadas:
@@ -192,6 +189,11 @@ async def servicio_log_sincronizar_obras(
     obras_actualizadas = len(resultado.obras_actualizadas)
     obras_eliminadas = len(resultado.obras_eliminadas)
 
+    bot_logger.info(f"Se crearon {obras_creadas} obras.")
+    bot_logger.info(f"Se actualizaron {obras_actualizadas} obras.")
+    bot_logger.info(f"Se eliminaron {obras_eliminadas} obras.")
+    bot_logger.info(f"Obras sin cambios: {resultado.obras_sin_cambio}")
+
     for creada in resultado.obras_creadas:
         audit_logger.info(f"Obra {creada.nombre} creada")
 
@@ -204,10 +206,6 @@ async def servicio_log_sincronizar_obras(
         audit_logger.info(
             f"Obra {eliminada.nombre} con id {eliminada.id_obra} eliminada"
         )
-
-    bot_logger.info(f"Se crearon {obras_creadas} obras.")
-    bot_logger.info(f"Se actualizaron {obras_actualizadas} obras.")
-    bot_logger.info(f"Se eliminaron {obras_eliminadas} obras.")
 
     embed_creadas, embed_actualizadas, embed_eliminadas = log_sincronizacion_obras(
         registros=resultado

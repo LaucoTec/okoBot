@@ -30,9 +30,10 @@ class ResultadoSincronizacionObras:
     obras_creadas: list[ObraCreada]
     obras_actualizadas: list[ObraActualizada]
     obras_eliminadas: list[ObraEliminada]
+    obras_sin_cambio: int = 0
 
 
-def determinar_cambios_obras(
+def _determinar_cambios_obras(
     obras: dict[int, str], hilos: dict[int, str]
 ) -> tuple[set[int], set[int], set[int]]:
 
@@ -62,7 +63,7 @@ async def detectar_actualizaciones_obras(bot: OkoBot) -> ResultadoSincronizacion
     obras_actuales = {obra["id_hilo"]: obra["nombre_obra"] for obra in obras}
     obras_ids = {obra["id_hilo"]: obra["id_obra"] for obra in obras}
 
-    creadas, eliminadas, actualizadas = determinar_cambios_obras(
+    creadas, eliminadas, actualizadas = _determinar_cambios_obras(
         obras=obras_actuales, hilos=hilos_actuales
     )
 
@@ -89,5 +90,9 @@ async def detectar_actualizaciones_obras(bot: OkoBot) -> ResultadoSincronizacion
         resultado.obras_eliminadas.append(
             ObraEliminada(id_obra=obras_ids[id_hilo], nombre=obras_actuales[id_hilo])
         )
+
+    resultado.obras_sin_cambio = len(obras_actuales) - (
+        len(creadas) + len(eliminadas) + len(actualizadas)
+    )
 
     return resultado

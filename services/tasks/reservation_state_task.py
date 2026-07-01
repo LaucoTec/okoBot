@@ -1,9 +1,13 @@
 from dataclasses import dataclass
 from enum import StrEnum
 
+from discord import HTTPException, Thread
+
 from config import OkoBot
 from db import BaseDeDatos
-from utils.discord_utils import obtener_hilo, obtener_mensaje
+from embeds.reservation_embeds import embed_reserva
+from services.reservation_services import obtener_datos_reserva
+from utils.discord_utils import obtener_canal_mensajes, obtener_mensaje
 from utils.time_utils import obtener_fecha_cdmx, str_a_fecha
 
 
@@ -28,11 +32,14 @@ class ResultadoActualizacionEstado:
     reservas_no_cambiadas: int
 
 
-def determinar_nuevo_estado(
+def _determinar_nuevo_estado(
     fecha_expiracion: str, estado_actual: EstadoReserva
 ) -> EstadoReserva:
     fecha_exp = str_a_fecha(fecha_expiracion)
     fecha_actual = obtener_fecha_cdmx().date()
+
+    if estado_actual == EstadoReserva.VENCIDA:
+        return EstadoReserva.VENCIDA
 
     if fecha_actual > fecha_exp:
         return EstadoReserva.VENCIDA
@@ -51,7 +58,7 @@ def detectar_cambios_estado_reserva(bd: BaseDeDatos) -> ResultadoActualizacionEs
 
     for reserva in reservas:
         estado_actual = EstadoReserva(reserva["estado"])
-        nuevo_estado = determinar_nuevo_estado(
+        nuevo_estado = _determinar_nuevo_estado(
             fecha_expiracion=reserva["fecha_expiracion"], estado_actual=estado_actual
         )
 
@@ -77,30 +84,39 @@ async def actualizar_mensajes_estado_reserva(
     reservas: ResultadoActualizacionEstado, bot: OkoBot
 ) -> int:
     """
-    Actualiza los mensajes de las reservas que han cambiado de estado a "Por Expirar" o "Vencida".
-    Parámetros:
-    - reservas: Un objeto ResultadoActualizacionEstado con las reservas por expirar y vencidas.
-    - bot: Instancia del bot OkoBot
+    Actualiza los mensajes de las reservas que cambiaron de estado.
+    Retorna la cantidad de reservas cuyo mensaje no pudo actualizarse.
     """
     contador_fallos = 0
 
-    for cambio in reservas.reservas_por_expirar + reservas.reservas_vencidas:
-        reserva = bot.bd.reservas.obtener_reserva_por_id(cambio.id_reserva)
-        if not reserva:
-            contador_fallos += 1
-            continue
-        hilo = await obtener_hilo(bot, reserva["id_hilo"])
-        if not hilo:
+    cambios = reservas.reservas_por_expirar + reservas.reservas_vencidas
+
+    for cambio in cambios:
+        datos_reserva = await obtener_datos_reserva(
+            bot=bot,
+            id_reserva=cambio.id_reserva,
+        )
+        if datos_reserva is None:
             contador_fallos += 1
             continue
 
-        mensaje = await obtener_mensaje(hilo, reserva["id_mensaje"])
-        if not mensaje or not mensaje.embeds:
+        hilo = await obtener_canal_mensajes(bot, datos_reserva.id_hilo)
+        if not isinstance(hilo, Thread):
             contador_fallos += 1
             continue
 
-        embed = mensaje.embeds[0]
-        # TODO: Aquí se debería modificar el embed para reflejar el nuevo estado de la reserva (por expirar o vencida)
-        # Aún no hago la plantilla para embed de reserva
+        if datos_reserva.id_mensaje is None:
+            contador_fallos += 1
+            continue
+
+        mensaje = await obtener_mensaje(hilo, datos_reserva.id_mensaje)
+        if mensaje is None:
+            contador_fallos += 1
+            continue
+
+        try:
+            await mensaje.edit(embed=embed_reserva(datos_reserva))
+        except HTTPException:
+            contador_fallos += 1
 
     return contador_fallos
