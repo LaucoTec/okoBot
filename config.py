@@ -84,6 +84,7 @@ class OkoBot(commands.Bot):
         intenciones.message_content = True
 
         self.reservasPendientes = {}
+        self.conteoMensajes = {}
 
         super().__init__(command_prefix="f!", intents=intenciones)
 

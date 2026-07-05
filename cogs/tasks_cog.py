@@ -7,7 +7,9 @@ from services.daily_tasks_services import (
     servicio_integridad_ids,
     servicio_log_actualizar_estados_reservas,
     servicio_log_integridad_ids,
+    servicio_log_purgar_registros_antiguos,
     servicio_log_sincronizar_obras,
+    servicio_purgar_registros_antiguos,
     servicio_sincronizar_obras,
 )
 from utils.time_utils import generar_hora_cdmx
@@ -68,6 +70,24 @@ class TareasCog(commands.Cog):
                 f"Error al ejecutar tarea de sinronización de obras: {e}", exc_info=True
             )
 
+    async def tarea_purgar_registros_antiguos(self):
+        try:
+            resultado_purga = servicio_purgar_registros_antiguos(
+                bd=self.bot.bd, dias_tolerancia=7
+            )
+            await servicio_log_purgar_registros_antiguos(
+                bot=self.bot, resultado=resultado_purga
+            )
+        except Exception as e:
+            bot_logger.error(
+                f"Error al ejecutar tarea de purga de registros antiguos: {e}",
+                exc_info=True,
+            )
+
+    def tarea_actividad_diaria(self):
+        bot_logger.info("--Reiniciando conteo de actividad diaria...")
+        self.bot.conteoMensajes.clear()
+
     # Se ejecuta diariamente a las 00:01 hora CDMX
     @tasks.loop(time=diarias)
     async def tareas_diarias(self):
@@ -75,8 +95,14 @@ class TareasCog(commands.Cog):
 
         # Ejecutar la tarea de integridad de IDs
         await self.tarea_integridad_ids()
+        # Ejecutar la tarea de actualización de estados de reservas
         await self.tarea_estado_reservas()
+        # Ejecutar la tarea de sincronización de obras
         await self.tarea_sincronizacion_obras()
+        # Ejecutar la tarea de purga de registros antiguos
+        await self.tarea_purgar_registros_antiguos()
+        # Reiniciar el conteo de actividad diaria
+        self.tarea_actividad_diaria()
 
     # Se ejecuta mensualmente el día 1 a las 00:00 hora CDMX
     @tasks.loop(time=mensuales)

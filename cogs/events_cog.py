@@ -13,7 +13,6 @@ class Eventos(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.conteoMensajes = {}
 
     @commands.Cog.listener()
     async def on_message(self, mensaje):
@@ -23,15 +22,15 @@ class Eventos(commands.Cog):
         # ---Conteo de mensajes para actualizar actividad---
         # Conteo de mensajes por usuario
         idUsuario = mensaje.author.id
-        if idUsuario not in self.conteoMensajes:
-            self.conteoMensajes[idUsuario] = 0
-        self.conteoMensajes[idUsuario] += 1
+        if idUsuario not in self.bot.conteoMensajes:
+            self.bot.conteoMensajes[idUsuario] = 0
+        self.bot.conteoMensajes[idUsuario] += 1
 
         # Actualizar BD si supera umbral de 5 mensajes
-        if self.conteoMensajes[idUsuario] >= 5:
+        if self.bot.conteoMensajes[idUsuario] >= 5:
             try:
                 self.bot.bd.usuarios.actualizarActividad(idUsuario)
-                self.conteoMensajes[idUsuario] = 0  # Reiniciar conteo
+                self.bot.conteoMensajes[idUsuario] = 0  # Reiniciar conteo
             except Exception as e:
                 logger.error(
                     f"Error actualizando actividad para usuario {idUsuario}: {e}",

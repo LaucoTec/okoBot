@@ -1,6 +1,6 @@
 from config import ID_LOGS_FICHAS, ID_LOGS_OBRAS, ID_LOGS_RESERVAS, OkoBot
 from db.database import BaseDeDatos
-from embeds.task_embeds import (
+from embeds.daily_task_embeds import (
     log_estados_reservas,
     log_integridad_ids,
     log_purga_registros,
