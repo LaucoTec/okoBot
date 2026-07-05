@@ -1,7 +1,9 @@
 from config import ID_LOGS_FICHAS, ID_LOGS_OBRAS, ID_LOGS_RESERVAS, OkoBot
+from db.database import BaseDeDatos
 from embeds.task_embeds import (
     log_estados_reservas,
     log_integridad_ids,
+    log_purga_registros,
     log_sincronizacion_obras,
 )
 from logs.loggers.audit_logger import logger as audit_logger
@@ -9,6 +11,10 @@ from logs.loggers.bot_logger import logger as bot_logger
 from services.tasks.integrity_task import (
     ResultadoIntegridad,
     detectar_integridad_ids,
+)
+from services.tasks.purge_expired import (
+    ResultadoLimpiezaRegistros,
+    detectar_registros_antiguos,
 )
 from services.tasks.reservation_state_task import (
     ResultadoActualizacionEstado,
@@ -82,7 +88,7 @@ async def servicio_log_integridad_ids(
     if reservas_eliminadas:
         for registro in resultado.reservas_invalidas:
             audit_logger.info(
-                f"Reserva eliminada: ID {registro.id_registro}, Nombre reserva: {registro.nombre}, Motivo: Referencia inválida."
+                f"Reserva eliminada: ID {registro.id_registro}, Nombre: {registro.nombre}, Motivo: Referencia inválida."
             )
 
         canal_reservas = await obtener_canal_mensajes(bot, ID_LOGS_RESERVAS)
@@ -111,7 +117,7 @@ async def servicio_actualizar_estados_reservas(
     - Un objeto ResultadoActualizacionEstado con listas de reservas por expirar, vencidas y un conteo de reservas sin cambios.
     """
     bot_logger.info("--Iniciando tarea de actualización estados de reserva--")
-    resultado = detectar_cambios_estado_reserva(bot.bd)
+    resultado = detectar_cambios_estado_reserva(bot.bd.reservas)
 
     # Actualizar estados en la base de datos
     for cambio in resultado.reservas_por_expirar + resultado.reservas_vencidas:
@@ -141,7 +147,7 @@ async def servicio_log_actualizar_estados_reservas(
 
     for cambio in resultado.reservas_por_expirar + resultado.reservas_vencidas:
         audit_logger.info(
-            f"Reserva ID {cambio.id_reserva} - '{cambio.nombre_reserva}' actualizada de estado '{cambio.estado_actual}' a '{cambio.estado_nuevo.value}'"
+            f"Reserva actualizada: ID {cambio.id_reserva}, Nombre '{cambio.nombre_reserva}', Actualizada de estado '{cambio.estado_actual}' a '{cambio.estado_nuevo.value}'"
         )
 
     embed_por_expirar, embed_vencidas = log_estados_reservas(registros=resultado)
@@ -154,10 +160,16 @@ async def servicio_log_actualizar_estados_reservas(
         return
 
     if resultado.reservas_por_expirar:
-        await canal.send(content="Reservas actualizadas.", embed=embed_por_expirar)
+        await canal.send(
+            content="Tarea Actualización Estados Reservas - Fichas por expirar hoy",
+            embed=embed_por_expirar,
+        )
 
     if resultado.reservas_vencidas:
-        await canal.send(content="Reservas actualizadas.", embed=embed_vencidas)
+        await canal.send(
+            content="Tarea Actualización Estados Reservas - Fichas vencidas hoy",
+            embed=embed_vencidas,
+        )
 
     bot_logger.info("--Tarea actualización estados reservas finalizada--")
 
@@ -189,22 +201,22 @@ async def servicio_log_sincronizar_obras(
     obras_actualizadas = len(resultado.obras_actualizadas)
     obras_eliminadas = len(resultado.obras_eliminadas)
 
-    bot_logger.info(f"Se crearon {obras_creadas} obras.")
-    bot_logger.info(f"Se actualizaron {obras_actualizadas} obras.")
-    bot_logger.info(f"Se eliminaron {obras_eliminadas} obras.")
+    bot_logger.info(f"Obras creadas: {obras_creadas}.")
+    bot_logger.info(f"Obras actualizadas: {obras_actualizadas}.")
+    bot_logger.info(f"Obras eliminadas: {obras_eliminadas}.")
     bot_logger.info(f"Obras sin cambios: {resultado.obras_sin_cambio}")
 
     for creada in resultado.obras_creadas:
-        audit_logger.info(f"Obra {creada.nombre} creada")
+        audit_logger.info(f"Obra creada: Nombre {creada.nombre}")
 
     for actualizada in resultado.obras_actualizadas:
         audit_logger.info(
-            f"Obra {actualizada.nombre_anterior} actualizada con el nombre {actualizada.nombre_nuevo}"
+            f"Obra actualizada: Nombre anterior '{actualizada.nombre_anterior}', Nombre nuevo '{actualizada.nombre_nuevo}'"
         )
 
     for eliminada in resultado.obras_eliminadas:
         audit_logger.info(
-            f"Obra {eliminada.nombre} con id {eliminada.id_obra} eliminada"
+            f"Obra eliminada: ID {eliminada.id_obra}, Nombre {eliminada.nombre}"
         )
 
     embed_creadas, embed_actualizadas, embed_eliminadas = log_sincronizacion_obras(
@@ -238,3 +250,83 @@ async def servicio_log_sincronizar_obras(
         )
 
     bot_logger.info("--Tarea sincronización obras finalizada--")
+
+
+def servicio_purgar_registros_antiguos(
+    bd: BaseDeDatos, dias_tolerancia: int
+) -> ResultadoLimpiezaRegistros:
+    """
+    Ejecuta la tarea de purga de registros antiguos, eliminando fichas y reservas que han sido eliminadas o vencidas por más de 'dias_tolerancia' días.
+    Parámetros:
+    - bd: Instancia de la base de datos
+    - dias_tolerancia: Número de días para considerar un registro como antiguo
+    Retorna:
+    - Un objeto ResultadoLimpiezaRegistros con listas de fichas y reservas antiguas y un conteo total de registros purgados.
+    """
+    bot_logger.info("--Iniciando tarea de purga de registros antiguos--")
+    resultado = detectar_registros_antiguos(bd=bd, dias_tolerancia=dias_tolerancia)
+
+    for ficha in resultado.fichas_antiguas:
+        bd.fichas.eliminar_ficha_definitivo(ficha.id_registro)
+
+    for reserva in resultado.reservas_antiguas:
+        bd.reservas.eliminar_reserva_definitiva(reserva.id_registro)
+
+    return resultado
+
+
+async def servicio_log_purgar_registros_antiguos(
+    bot: OkoBot, resultado: ResultadoLimpiezaRegistros
+) -> None:
+    """
+    Envía logs de la tarea de purga de registros antiguos a los canales correspondientes.
+    Parámetros:
+    - bot: Instancia del bot OkoBot
+    - resultado: Objeto ResultadoLimpiezaRegistros con los registros purgados
+    """
+    fichas_eliminadas = len(resultado.fichas_antiguas)
+    reservas_eliminadas = len(resultado.reservas_antiguas)
+
+    bot_logger.info(f"Fichas eliminadas: {fichas_eliminadas}")
+    bot_logger.info(f"Reservas eliminadas: {reservas_eliminadas}")
+    bot_logger.info(f"Registros purgados: {resultado.registros_purgados}")
+
+    for ficha in resultado.fichas_antiguas:
+        audit_logger.info(
+            f"Ficha purgada: ID {ficha.id_registro}, Nombre '{ficha.nombre}', Fecha estado '{ficha.fecha_estado}'"
+        )
+
+    for reserva in resultado.reservas_antiguas:
+        audit_logger.info(
+            f"Reserva purgada: ID {reserva.id_registro}, Nombre '{reserva.nombre}', Fecha estado '{reserva.fecha_estado}'"
+        )
+
+    embed_fichas, embed_reservas = log_purga_registros(registros=resultado)
+
+    canal_fichas = await obtener_canal_mensajes(bot=bot, canal_id=ID_LOGS_FICHAS)
+    canal_reservas = await obtener_canal_mensajes(bot=bot, canal_id=ID_LOGS_RESERVAS)
+
+    if canal_fichas:
+        if resultado.fichas_antiguas:
+            await canal_fichas.send(
+                content="Tarea Purga de Registros Antiguos - Fichas Eliminadas.",
+                embed=embed_fichas,
+            )
+
+    else:
+        bot_logger.warning(
+            f"No se encontró el canal de logs de fichas con ID {ID_LOGS_FICHAS}"
+        )
+
+    if canal_reservas:
+        if resultado.reservas_antiguas:
+            await canal_reservas.send(
+                content="Tarea Purga de Registros Antiguos - Reservas Eliminadas.",
+                embed=embed_reservas,
+            )
+    else:
+        bot_logger.warning(
+            f"No se encontró el canal de logs de reservas con ID {ID_LOGS_RESERVAS}"
+        )
+
+    bot_logger.info("--Tarea purga de registros antiguos finalizada--")

@@ -8,7 +8,6 @@ from utils.discord_utils import es_huerfano
 @dataclass
 class RegistroInvalido:
     id_registro: int
-    tipo: str
     nombre: str
 
 
@@ -39,7 +38,6 @@ async def _obtener_ids_invalidos(
             registros_invalidos.append(
                 RegistroInvalido(
                     id_registro=id_registro,
-                    tipo=campo_id.replace("id_", ""),
                     nombre=registro["nombre_personaje"],
                 )
             )

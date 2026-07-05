@@ -4,7 +4,7 @@ from enum import StrEnum
 from discord import HTTPException, Thread
 
 from config import OkoBot
-from db import BaseDeDatos
+from db.repos import RepoReservas
 from embeds.reservation_embeds import embed_reserva
 from services.reservation_services import obtener_datos_reserva
 from utils.discord_utils import obtener_canal_mensajes, obtener_mensaje
@@ -50,8 +50,8 @@ def _determinar_nuevo_estado(
         return EstadoReserva(estado_actual)
 
 
-def detectar_cambios_estado_reserva(bd: BaseDeDatos) -> ResultadoActualizacionEstado:
-    reservas = bd.reservas.obtener_reservas()
+def detectar_cambios_estado_reserva(bd: RepoReservas) -> ResultadoActualizacionEstado:
+    reservas = bd.obtener_reservas()
     resultado = ResultadoActualizacionEstado(
         reservas_por_expirar=[], reservas_vencidas=[], reservas_no_cambiadas=0
     )

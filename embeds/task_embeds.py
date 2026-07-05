@@ -2,6 +2,7 @@ from discord import Embed
 
 from embeds.embed_base import AccionesLogs, generico_log
 from services.tasks.integrity_task import ResultadoIntegridad
+from services.tasks.purge_expired import ResultadoLimpiezaRegistros
 from services.tasks.reservation_state_task import ResultadoActualizacionEstado
 from services.tasks.universes_update_task import ResultadoSincronizacionObras
 
@@ -15,7 +16,7 @@ def log_integridad_ids(
         accion=AccionesLogs.DELETE,
         titulo=f"Se eliminaron {fichas_eliminadas} fichas porque sus mensajes y/o hilos ya no existen.",
         descripcion="".join(
-            f"- ID Ficha: {registro.id_registro}, Nombre ficha: {registro.nombre}\n"
+            f"- **Ficha**: ID - {registro.id_registro}, Nombre - {registro.nombre}\n"
             for registro in registros.fichas_invalidas
         ),
         autor=None,
@@ -26,7 +27,7 @@ def log_integridad_ids(
         accion=AccionesLogs.DELETE,
         titulo=f"Se eliminaron {reservas_eliminadas} reservas porque sus mensajes y/o obras ya no existen.",
         descripcion="".join(
-            f"- ID Reserva: {registro.id_registro}, Nombre reserva: {registro.nombre}\n"
+            f"- **Reserva**: ID - {registro.id_registro}, Nombre - {registro.nombre}\n"
             for registro in registros.reservas_invalidas
         ),
         autor=None,
@@ -44,7 +45,7 @@ def log_estados_reservas(
         accion=AccionesLogs.EDIT,
         titulo="Tarea Actualización Estados Reservas - Fichas por expirar hoy",
         descripcion="".join(
-            f"- ID reserva: {reserva.id_reserva}, Nombre: {reserva.nombre_reserva}"
+            f"- **Reserva**: ID - {reserva.id_reserva}, Nombre - {reserva.nombre_reserva}"
             for reserva in registros.reservas_por_expirar
         ),
         autor=None,
@@ -54,7 +55,7 @@ def log_estados_reservas(
         accion=AccionesLogs.EDIT,
         titulo="Tarea Actualización Estados Reservas - Fichas vencidas hoy",
         descripcion="".join(
-            f"- ID reserva: {reserva.id_reserva}, Nombre: {reserva.nombre_reserva}"
+            f"- **Reserva**: ID - {reserva.id_reserva}, Nombre - {reserva.nombre_reserva}"
             for reserva in registros.reservas_vencidas
         ),
         autor=None,
@@ -76,7 +77,7 @@ def log_sincronizacion_obras(
         accion=AccionesLogs.CREATE,
         titulo=f"Se crearon {obras_creadas} en la base de datos.",
         descripcion="".join(
-            f"-ID hilo: {creada.id_hilo}, Nombre obra: {creada.nombre}\n"
+            f"- **Obra**: ID hilo - {creada.id_hilo}, Nombre - {creada.nombre}\n"
             for creada in registros.obras_creadas
         ),
         autor=None,
@@ -87,7 +88,7 @@ def log_sincronizacion_obras(
         accion=AccionesLogs.EDIT,
         titulo=f"Se actualizaron {obras_actualizadas} en la base de datos.",
         descripcion="".join(
-            f"- ID: {actualizada.id_obra}, Nombre: ~~{actualizada.nombre_anterior}~~ -> **{actualizada.nombre_nuevo}**\n"
+            f"- **Obra**: ID - {actualizada.id_obra}, Nombre - ~~{actualizada.nombre_anterior}~~ -> **{actualizada.nombre_nuevo}**\n"
             for actualizada in registros.obras_actualizadas
         ),
         autor=None,
@@ -98,7 +99,7 @@ def log_sincronizacion_obras(
         accion=AccionesLogs.DELETE,
         titulo=f"Se eliminaron {obras_eliminadas} en la base de datos.",
         descripcion="".join(
-            f"- ID: {eliminada.id_obra} ,Nombre obra: {eliminada.nombre}\n"
+            f"- **Obra**: ID - {eliminada.id_obra}, Nombre - {eliminada.nombre}\n"
             for eliminada in registros.obras_eliminadas
         ),
         autor=None,
@@ -106,3 +107,34 @@ def log_sincronizacion_obras(
     )
 
     return embed_creadas, embed_actualizadas, embed_eliminadas
+
+
+def log_purga_registros(
+    registros: ResultadoLimpiezaRegistros,
+) -> tuple[Embed, Embed]:
+    fichas_eliminadas = len(registros.fichas_antiguas)
+    reservas_eliminadas = len(registros.reservas_antiguas)
+
+    embed_fichas = generico_log(
+        accion=AccionesLogs.DELETE,
+        titulo=f"Se eliminaron {fichas_eliminadas} fichas antiguas.",
+        descripcion="".join(
+            f"- **Ficha**: ID - {registro.id_registro}, Nombre - {registro.nombre}, Fecha estado - {registro.fecha_estado}\n"
+            for registro in registros.fichas_antiguas
+        ),
+        autor=None,
+        id_operacion="N/A",
+    )
+
+    embed_reservas = generico_log(
+        accion=AccionesLogs.DELETE,
+        titulo=f"Se eliminaron {reservas_eliminadas} reservas antiguas.",
+        descripcion="".join(
+            f"- **Reserva**: ID - {registro.id_registro}, Nombre - {registro.nombre}, Fecha estado - {registro.fecha_estado}\n"
+            for registro in registros.reservas_antiguas
+        ),
+        autor=None,
+        id_operacion="N/A",
+    )
+
+    return embed_fichas, embed_reservas
