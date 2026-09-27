@@ -1,6 +1,30 @@
-from discord import Attachment, Message, NotFound, TextChannel, Thread, User
+from discord import (
+    Attachment,
+    Guild,
+    Member,
+    Message,
+    NotFound,
+    TextChannel,
+    Thread,
+    User,
+)
 from discord.abc import GuildChannel
 from discord.ext import commands
+
+from config import ID_SERVER
+
+
+async def _obtener_servidor(bot: commands.Bot, server_id: int) -> Guild | None:
+    servidor = bot.get_guild(server_id)
+
+    if servidor is None:
+        try:
+            servidor = await bot.fetch_guild(server_id)
+
+        except NotFound:
+            return None
+
+    return servidor
 
 
 async def obtener_usuario(bot: commands.Bot, usuario_id: int) -> User | None:
@@ -12,6 +36,24 @@ async def obtener_usuario(bot: commands.Bot, usuario_id: int) -> User | None:
 
         except NotFound:
             return None
+
+
+async def obtener_miembro(bot: commands.Bot, usuario_id: int) -> Member | None:
+    servidor = await _obtener_servidor(bot=bot, server_id=ID_SERVER)
+
+    if servidor is None:
+        return None
+
+    miembro = servidor.get_member(usuario_id)
+
+    if miembro is None:
+        try:
+            miembro = await servidor.fetch_member(usuario_id)
+
+        except NotFound:
+            return None
+
+    return miembro
 
 
 async def obtener_canal_server(bot: commands.Bot, canal_id: int) -> GuildChannel | None:

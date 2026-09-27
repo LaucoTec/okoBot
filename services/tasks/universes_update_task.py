@@ -69,11 +69,9 @@ async def detectar_actualizaciones_obras(bot: OkoBot) -> ResultadoSincronizacion
 
     for id_hilo in creadas:
         resultado.obras_creadas.append(
-            (
-                ObraCreada(
-                    nombre=hilos_actuales[id_hilo],
-                    id_hilo=id_hilo,
-                )
+            ObraCreada(
+                nombre=hilos_actuales[id_hilo],
+                id_hilo=id_hilo,
             )
         )
 

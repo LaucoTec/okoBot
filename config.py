@@ -49,12 +49,18 @@ ID_VERIFICADOR = _env("ID_VERIFICADOR", cast=int)
 ID_GENERAL = _env("ID_GENERAL", cast=int)
 # ID canal de verificación
 ID_VERIFICACION = _env("ID_VERIFICACION", cast=int)
+# ID canal de anuncios del bot
+ID_ANUNCIOS = _env("ID_ANUNCIOS", cast=int)
+# ID roles a notificar de los anuncios del bot
+ID_PINGS_ANUNCIOS = _env("ID_PINGS_ANUNCIOS", cast=int)
 # ID de canal de advertencias por inactividad
 ID_ADVERTENCIAS = _env("ID_ADVERTENCIAS", cast=int)
 # ID de canal de repositorio de imágenes
 ID_REPOSITORIO = _env("ID_REPOSITORIO", cast=int)
 # ID foro de reservas
 ID_RESERVAS = _env("ID_RESERVAS", cast=int)
+# Id de logs de usuarios
+ID_LOGS_USUARIOS = _env("ID_LOGS_USUARIOS", cast=int)
 # ID de logs de obras y alias
 ID_LOGS_OBRAS = _env("ID_LOGS_OBRAS", cast=int)
 # ID de logs de reservas

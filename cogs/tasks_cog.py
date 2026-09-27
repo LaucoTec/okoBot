@@ -12,7 +12,12 @@ from services.daily_tasks_services import (
     servicio_purgar_registros_antiguos,
     servicio_sincronizar_obras,
 )
-from utils.time_utils import generar_hora_cdmx
+from services.montly_tasks_services import (
+    servicio_enviar_aviso_pre_mensual,
+    servicio_log_purgar_usuarios_ausentes,
+    servicio_purgar_usuarios_ausentes,
+)
+from utils.time_utils import generar_hora_cdmx, obtener_fecha_cdmx
 
 # Medianoche hora CDMX
 diarias = generar_hora_cdmx(0, 1, 0)
@@ -88,6 +93,27 @@ class TareasCog(commands.Cog):
         bot_logger.info("--Reiniciando conteo de actividad diaria...")
         self.bot.conteoMensajes.clear()
 
+    async def tarea_aviso_pre_mensual(self):
+        bot_logger.info("--Enviando aviso pre-mensual...")
+        # Lógica para enviar aviso pre-mensual
+        try:
+            await servicio_enviar_aviso_pre_mensual(self.bot)
+        except Exception as e:
+            bot_logger.error(
+                f"Error al ejecutar tarea de aviso pre-mensual: {e}", exc_info=True
+            )
+
+    async def tarea_purgar_usuarios_ausentes(self):
+        bot_logger.info("--Iniciando tarea de purga de usuarios ausentes--")
+        try:
+            resultado = await servicio_purgar_usuarios_ausentes(self.bot)
+            await servicio_log_purgar_usuarios_ausentes(self.bot, resultado)
+        except Exception as e:
+            bot_logger.error(
+                f"Error al ejecutar tarea de purga de usuarios ausentes: {e}",
+                exc_info=True,
+            )
+
     # Se ejecuta diariamente a las 00:01 hora CDMX
     @tasks.loop(time=diarias)
     async def tareas_diarias(self):
@@ -104,9 +130,23 @@ class TareasCog(commands.Cog):
         # Reiniciar el conteo de actividad diaria
         self.tarea_actividad_diaria()
 
+    # Se ejecuta a las 00:00 hora CDMX el día 28 de cada mes
+    @tasks.loop(time=mensuales)
+    async def aviso_pre_mensual(self):
+        # Ejecutar sólo si es día 28 del mes
+        if obtener_fecha_cdmx().day != 28:
+            return
+        await self.tarea_aviso_pre_mensual()
+
     # Se ejecuta mensualmente el día 1 a las 00:00 hora CDMX
     @tasks.loop(time=mensuales)
-    async def tareas_mensuales(self): ...  # Lógica para tareas mensuales
+    async def tareas_mensuales(self):
+        if obtener_fecha_cdmx().day != 1:
+            return
+        bot_logger.info("Ejecutando tareas mensuales...")
+
+        # Ejecutar la tarea de purga de usuarios ausentes
+        await self.tarea_purgar_usuarios_ausentes()
 
 
 async def setup(bot: OkoBot):
