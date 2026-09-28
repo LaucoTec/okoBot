@@ -69,9 +69,11 @@ def generico_cancelar(comando: str) -> Embed:
 
 
 # ---Advertencia---
-def generico_advertencia(mensaje: str) -> Embed:
+def generico_advertencia(
+    mensaje: str, titulo: str = "Revise atentamente antes de continuar"
+) -> Embed:
     return Embed(
-        title="Revise atentamente antes de continuar",
+        title=titulo,
         description=mensaje,
         color=WARNING_COLOR,
     )

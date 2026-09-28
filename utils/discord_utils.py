@@ -114,3 +114,33 @@ def es_imagen(attachment: Attachment) -> bool:
     return bool(
         attachment.content_type and attachment.content_type.startswith("image/")
     )
+
+
+async def crear_hilo(
+    nombre: str,
+    canal: int | TextChannel,
+    bot: commands.Bot,
+    mensaje: Message | None = None,
+) -> Thread | None:
+
+    if mensaje and isinstance(mensaje.channel, TextChannel):
+        creacion_hilo = await mensaje.channel.create_thread(
+            name=nombre, message=mensaje, auto_archive_duration=1440
+        )
+        return creacion_hilo
+
+    elif isinstance(canal, TextChannel):
+        creacion_hilo = await canal.create_thread(
+            name=nombre, auto_archive_duration=1440, invitable=False
+        )
+        return creacion_hilo
+
+    else:
+        canal_obtenido = await obtener_canal_mensajes(bot, canal)
+        if isinstance(canal_obtenido, TextChannel):
+            creacion_hilo = await canal_obtenido.create_thread(
+                name=nombre, auto_archive_duration=1440, invitable=False
+            )
+            return creacion_hilo
+
+    return None
