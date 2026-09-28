@@ -163,7 +163,7 @@ class RepoReservas(AsistenteDeConsultas):
             )
             return []
 
-    def obtener_reservas_por_usuario_estado(
+    def obtener_reservas_por_usuario_y_estado(
         self, id_propietario: int, estado: str
     ) -> list[sql.Row]:
         """Obtiene todas las reservas de un usuario específico con un estado determinado, ordenadas por fecha de reserva descendente."""

@@ -8,13 +8,13 @@ from embeds.daily_task_embeds import (
 )
 from logs.loggers.audit_logger import logger as audit_logger
 from logs.loggers.bot_logger import logger as bot_logger
+from services.tasks.expired_records import (
+    ResultadoLimpiezaRegistros,
+    detectar_registros_antiguos,
+)
 from services.tasks.integrity_task import (
     ResultadoIntegridad,
     detectar_integridad_ids,
-)
-from services.tasks.purge_expired import (
-    ResultadoLimpiezaRegistros,
-    detectar_registros_antiguos,
 )
 from services.tasks.reservation_state_task import (
     ResultadoActualizacionEstado,

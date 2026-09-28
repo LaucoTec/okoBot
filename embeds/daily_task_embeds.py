@@ -1,8 +1,8 @@
 from discord import Embed
 
 from embeds.embed_base import AccionesLogs, generico_log
+from services.tasks.expired_records import ResultadoLimpiezaRegistros
 from services.tasks.integrity_task import ResultadoIntegridad
-from services.tasks.purge_expired import ResultadoLimpiezaRegistros
 from services.tasks.reservation_state_task import ResultadoActualizacionEstado
 from services.tasks.universes_update_task import ResultadoSincronizacionObras
 
