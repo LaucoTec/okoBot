@@ -1,5 +1,8 @@
+from contextvars import ContextVar
 from sqlite3 import Connection, Cursor, Row
 from typing import Any
+
+en_transaccion_var: ContextVar[bool] = ContextVar("en_transaccion", default=False)
 
 
 class AsistenteDeConsultas:
@@ -7,8 +10,16 @@ class AsistenteDeConsultas:
         self.conexion = conexion
 
     def ejecutar(self, consulta: str, parametros: tuple[Any, ...] = ()) -> Cursor:
-        with self.conexion:
-            cursor = self.conexion.execute(consulta, parametros)
+        cursor = self.conexion.cursor()
+        try:
+            cursor.execute(consulta, parametros)
+        except Exception:
+            self.conexion.rollback()
+            raise
+
+        if not en_transaccion_var.get():
+            self.conexion.commit()
+
         return cursor
 
     def consulta_uno(
