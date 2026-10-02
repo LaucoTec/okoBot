@@ -98,7 +98,7 @@ async def servicio_desactivar_usuarios_inactivos(
     """
     bot_logger.info("--Iniciando tarea de desactivación de usuarios inactivos--")
 
-    resultado = obtener_usuarios_inactivos(bot.bd)
+    resultado = await obtener_usuarios_inactivos(bot)
 
     canal_advertencias = await obtener_canal_mensajes(bot, ID_ADVERTENCIAS)
     if not isinstance(canal_advertencias, TextChannel):

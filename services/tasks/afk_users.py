@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
+from config import OkoBot
 from db import BaseDeDatos
+from utils.discord_utils import obtener_miembro
 
 
 @dataclass
@@ -34,15 +36,16 @@ def _obtener_registros_inactivos(
     return fichas, reservas
 
 
-def obtener_usuarios_inactivos(bd: BaseDeDatos) -> ResultadoUsuariosInactivos:
-    usuarios = bd.usuarios.obtener_usuarios_inactivos(dias=5)
+async def obtener_usuarios_inactivos(bot: OkoBot) -> ResultadoUsuariosInactivos:
+    usuarios = bot.bd.usuarios.obtener_usuarios_inactivos(dias=5)
     resultado = []
     for usuario in usuarios:
-        fichas, reservas = _obtener_registros_inactivos(bd, usuario["id"])
+        fichas, reservas = _obtener_registros_inactivos(bot.bd, usuario["id"])
+        nombre = await obtener_miembro(bot, usuario["id"])
         resultado.append(
             UsuarioInactivo(
                 id=usuario["id"],
-                nombre=usuario["nombre"],
+                nombre=nombre.display_name if nombre is not None else None,
                 fichas=fichas,
                 reservas=reservas,
             )
