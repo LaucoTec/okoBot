@@ -42,10 +42,22 @@ async def servicio_integridad_ids(bot: OkoBot) -> ResultadoIntegridad:
     resultado = await detectar_integridad_ids(bot=bot)
 
     for registro in resultado.fichas_invalidas:
-        bot.bd.fichas.eliminar_ficha_definitivo(registro.id_registro)
+        try:
+            bot.bd.fichas.eliminar_ficha_definitivo(registro.id_registro)
+        except Exception:
+            bot_logger.error(
+                f"No se pudo eliminar la ficha {registro.nombre} con ID {registro.id_registro}.",
+                exc_info=True,
+            )
 
     for registro in resultado.reservas_invalidas:
-        bot.bd.reservas.eliminar_reserva_definitiva(registro.id_registro)
+        try:
+            bot.bd.reservas.eliminar_reserva_definitiva(registro.id_registro)
+        except Exception:
+            bot_logger.error(
+                f"No se pudo eliminar la reserva {registro.nombre} con ID {registro.id_registro}.",
+                exc_info=True,
+            )
 
     return resultado
 
@@ -121,10 +133,16 @@ async def servicio_actualizar_estados_reservas(
 
     # Actualizar estados en la base de datos
     for cambio in resultado.reservas_por_expirar + resultado.reservas_vencidas:
-        bot.bd.reservas.actualizar_estado_reserva(
-            cambio.id_reserva, cambio.estado_nuevo.value
-        )
-
+        try:
+            bot.bd.reservas.actualizar_estado_reserva(
+                cambio.id_reserva, cambio.estado_nuevo.value
+            )
+        except Exception:
+            bot_logger.error(
+                f"No se pudo actualizar el estado de la reserva {cambio.nombre_reserva} con ID {cambio.id_reserva}.",
+                exc_info=True,
+            )
+            continue
     # Actualizar mensajes en Discord
     contador_fallos = await actualizar_mensajes_estado_reserva(resultado, bot)
     if contador_fallos > 0:
@@ -179,16 +197,19 @@ async def servicio_sincronizar_obras(bot: OkoBot) -> ResultadoSincronizacionObra
     bot_logger.info("--Iniciando tarea de sincronización de obras--")
     resultado = await detectar_actualizaciones_obras(bot=bot)
 
-    for creada in resultado.obras_creadas:
-        bot.bd.obras.crear_obra(nombre_obra=creada.nombre, id_hilo=creada.id_hilo)
+    async with bot.bd.transaccion():
+        for creada in resultado.obras_creadas:
+            bot.bd.obras.crear_obra(
+                nombre_obra=creada.nombre, id_hilo=creada.id_hilo
+            )
 
-    for actualizada in resultado.obras_actualizadas:
-        bot.bd.obras.actualizar_obra(
-            id_obra=actualizada.id_obra, nombre_obra=actualizada.nombre_nuevo
-        )
+        for actualizada in resultado.obras_actualizadas:
+            bot.bd.obras.actualizar_obra(
+                id_obra=actualizada.id_obra, nombre_obra=actualizada.nombre_nuevo
+            )
 
-    for eliminada in resultado.obras_eliminadas:
-        bot.bd.obras.eliminar_obra(id_obra=eliminada.id_obra)
+        for eliminada in resultado.obras_eliminadas:
+            bot.bd.obras.eliminar_obra(id_obra=eliminada.id_obra)
 
     return resultado
 
@@ -267,10 +288,22 @@ def servicio_purgar_registros_antiguos(
     resultado = detectar_registros_antiguos(bd=bd, dias_tolerancia=dias_tolerancia)
 
     for ficha in resultado.fichas_antiguas:
-        bd.fichas.eliminar_ficha_definitivo(ficha.id_registro)
+        try:
+            bd.fichas.eliminar_ficha_definitivo(ficha.id_registro)
+        except Exception:
+            bot_logger.error(
+                f"Ocurrió un error al eliminar la ficha con ID {ficha.id_registro}.",
+                exc_info=True,
+            )
 
     for reserva in resultado.reservas_antiguas:
-        bd.reservas.eliminar_reserva_definitiva(reserva.id_registro)
+        try:
+            bd.reservas.eliminar_reserva_definitiva(reserva.id_registro)
+        except Exception:
+            bot_logger.error(
+                f"Ocurrió un error al eliminar la reserva con ID {reserva.id_registro}.",
+                exc_info=True,
+            )
 
     return resultado
 

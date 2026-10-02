@@ -43,7 +43,14 @@ async def servicio_purgar_usuarios_ausentes(bot: OkoBot) -> ResultadoUsuariosAus
     resultado = await obtener_usuarios_ausentes(bot)
 
     for usuario in resultado.usuarios:
-        bot.bd.usuarios.eliminar_usuario(usuario.id)
+        try:
+            bot.bd.usuarios.eliminar_usuario(usuario.id)
+        except Exception:
+            bot_logger.error(
+                f"No se pudo eliminar al usuario {usuario.nombre} con ID {usuario.id}.",
+                exc_info=True,
+            )
+            continue
 
     return resultado
 
@@ -160,17 +167,14 @@ async def servicio_log_desactivar_usuarios_inactivos(
     Registra en los logs la desactivación de usuarios inactivos.
     """
     usuarios_desactivados = len(resultado.usuarios)
+    fichas_desactivadas = sum(len(u.fichas) for u in resultado.usuarios)
+    reservas_desactivadas = sum(len(u.reservas) for u in resultado.usuarios)
 
     bot_logger.info(f"Usuarios inactivos desactivados: {usuarios_desactivados}")
+    bot_logger.info(f"Fichas desactivadas: {fichas_desactivadas}")
+    bot_logger.info(f"Reservas desactivadas: {reservas_desactivadas}")
 
     if usuarios_desactivados > 0:
-        canal_usuarios = await obtener_canal_mensajes(bot, ID_LOGS_USUARIOS)
-        if not canal_usuarios:
-            bot_logger.warning(
-                f"No se encontró el canal de logs de usuarios con ID {ID_LOGS_USUARIOS}"
-            )
-            return
-
         for usuario in resultado.usuarios:
             if usuario.nombre:
                 audit_logger.info(
@@ -196,30 +200,33 @@ async def servicio_log_desactivar_usuarios_inactivos(
         )
         canal_usuarios = await obtener_canal_mensajes(bot, ID_LOGS_USUARIOS)
         if canal_usuarios:
-            await canal_usuarios.send(
-                content="Tarea desactivación de usuarios inactivos - Usuarios desactivados",
-                embed=embed_usuario,
-            )
+            if usuarios_desactivados > 0:
+                await canal_usuarios.send(
+                    content="Tarea desactivación de usuarios inactivos - Usuarios desactivados",
+                    embed=embed_usuario,
+                )
         else:
             bot_logger.warning(
                 f"No se encontró el canal de logs de usuarios con ID {ID_LOGS_USUARIOS}"
             )
         canal_fichas = await obtener_canal_mensajes(bot, ID_LOGS_FICHAS)
         if canal_fichas:
-            await canal_fichas.send(
-                content="Tarea desactivación de usuarios inactivos - Fichas desactivadas",
-                embed=embed_fichas,
-            )
+            if fichas_desactivadas > 0:
+                await canal_fichas.send(
+                    content="Tarea desactivación de usuarios inactivos - Fichas desactivadas",
+                    embed=embed_fichas,
+                )
         else:
             bot_logger.warning(
                 f"No se encontró el canal de logs de fichas con ID {ID_LOGS_FICHAS}"
             )
         canal_reservas = await obtener_canal_mensajes(bot, ID_LOGS_RESERVAS)
         if canal_reservas:
-            await canal_reservas.send(
-                content="Tarea desactivación de usuarios inactivos - Reservas desactivadas",
-                embed=embed_reservas,
-            )
+            if reservas_desactivadas > 0:
+                await canal_reservas.send(
+                    content="Tarea desactivación de usuarios inactivos - Reservas desactivadas",
+                    embed=embed_reservas,
+                )
         else:
             bot_logger.warning(
                 f"No se encontró el canal de logs de reservas con ID {ID_LOGS_RESERVAS}"

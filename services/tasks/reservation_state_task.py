@@ -13,7 +13,7 @@ from utils.time_utils import obtener_fecha_cdmx, str_a_fecha
 
 class EstadoReserva(StrEnum):
     ACTIVA = "activa"
-    POR_EXPIRAR = "por expirar"
+    POR_EXPIRAR = "por_expirar"
     VENCIDA = "vencida"
 
 

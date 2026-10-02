@@ -37,6 +37,8 @@ async def obtener_usuario(bot: commands.Bot, usuario_id: int) -> User | None:
         except NotFound:
             return None
 
+    return usuario
+
 
 async def obtener_miembro(bot: commands.Bot, usuario_id: int) -> Member | None:
     servidor = await _obtener_servidor(bot=bot, server_id=ID_SERVER)

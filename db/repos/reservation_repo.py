@@ -258,7 +258,7 @@ class RepoReservas(AsistenteDeConsultas):
         """Actualiza el estado de una reserva. El nuevo estado debe ser 'activa', 'vencida' o 'por_expirar'."""
         if nuevo_estado not in ("activa", "vencida", "por_expirar"):
             logger.warning(f"Estado inválido para reserva {id_reserva}: {nuevo_estado}")
-            return False
+            raise ValueError(f"Estado inválido: {nuevo_estado}")
 
         try:
             cursor = self.ejecutar(

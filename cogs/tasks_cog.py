@@ -13,7 +13,9 @@ from services.daily_tasks_services import (
     servicio_sincronizar_obras,
 )
 from services.montly_tasks_services import (
+    servicio_desactivar_usuarios_inactivos,
     servicio_enviar_aviso_pre_mensual,
+    servicio_log_desactivar_usuarios_inactivos,
     servicio_log_purgar_usuarios_ausentes,
     servicio_purgar_usuarios_ausentes,
 )
@@ -38,10 +40,12 @@ class TareasCog(commands.Cog):
         self.bot = bot
         self.tareas_diarias.start()
         self.tareas_mensuales.start()
+        self.aviso_pre_mensual.start()
 
     async def cog_unload(self):
         self.tareas_diarias.cancel()
         self.tareas_mensuales.cancel()
+        self.aviso_pre_mensual.cancel()
 
     async def tarea_integridad_ids(self):
         try:
@@ -104,13 +108,22 @@ class TareasCog(commands.Cog):
             )
 
     async def tarea_purgar_usuarios_ausentes(self):
-        bot_logger.info("--Iniciando tarea de purga de usuarios ausentes--")
         try:
             resultado = await servicio_purgar_usuarios_ausentes(self.bot)
             await servicio_log_purgar_usuarios_ausentes(self.bot, resultado)
         except Exception as e:
             bot_logger.error(
                 f"Error al ejecutar tarea de purga de usuarios ausentes: {e}",
+                exc_info=True,
+            )
+
+    async def tarea_desactivar_usuarios_inactivos(self):
+        try:
+            resultado = await servicio_desactivar_usuarios_inactivos(self.bot)
+            await servicio_log_desactivar_usuarios_inactivos(self.bot, resultado)
+        except Exception as e:
+            bot_logger.error(
+                f"Error al ejecutar tarea de desactivación de usuarios inactivos: {e}",
                 exc_info=True,
             )
 
@@ -147,6 +160,8 @@ class TareasCog(commands.Cog):
 
         # Ejecutar la tarea de purga de usuarios ausentes
         await self.tarea_purgar_usuarios_ausentes()
+        # Ejecutar la tarea de desactivación de usuarios inactivos
+        await self.tarea_desactivar_usuarios_inactivos()
 
 
 async def setup(bot: OkoBot):
