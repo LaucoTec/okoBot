@@ -64,7 +64,7 @@ def iniciar_bd(conn: Connection):
             fecha_estado TEXT DEFAULT CURRENT_TIMESTAMP,
             estado TEXT DEFAULT 'activa' CHECK(estado IN ('activa', 'vencida', 'por_expirar')),
             enlace_imagen TEXT  NOT NULL,
-            id_hilo INTEGER NOT NULL UNIQUE,
+            id_hilo INTEGER NOT NULL,
             id_mensaje INTEGER UNIQUE
             );
             """)
