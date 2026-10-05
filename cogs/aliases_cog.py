@@ -3,16 +3,22 @@ from discord import app_commands
 from discord.app_commands import CommandOnCooldown, MissingRole
 from discord.ext import commands
 
-from config import ID_VERIFICADOR
+from config import ID_VERIFICADOR, OkoBot
 from embeds.alias_embeds import (
     embed_alias_crear,
+    embed_alias_eliminar,
     embed_alias_listar_inicial,
     embed_alias_log,
 )
+from embeds.embed_base import AccionesLogs, generico_error_comando
+from logs.loggers.bot_logger import logger as bot_logger
 from services.alias_services import (
+    EstadoServicioAliasCrear,
+    EstadoServicioAliasEliminar,
     servicio_alias_autocompletar_alias,
     servicio_alias_autocompletar_obra,
     servicio_alias_crear,
+    servicio_alias_eliminar,
     servicio_alias_listar_obras,
     servicio_alias_log,
 )
@@ -20,7 +26,7 @@ from views import AliasVista
 
 
 async def autocompletar_obra(
-    interaction: discord.Interaction,
+    interaction: discord.Interaction[OkoBot],
     current: str,
 ) -> list[app_commands.Choice[str]]:
     bot = interaction.client
@@ -28,7 +34,7 @@ async def autocompletar_obra(
 
 
 async def autocompletar_alias(
-    interaction: discord.Interaction,
+    interaction: discord.Interaction[OkoBot],
     current: str,
 ) -> list[app_commands.Choice[str]]:
     bot = interaction.client
@@ -41,7 +47,7 @@ class AliasCog(commands.Cog):
     para obras existentes, facilitando su identificación y búsqueda.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: OkoBot):
         self.bot = bot
 
     aliasGroup = app_commands.Group(
@@ -57,78 +63,128 @@ class AliasCog(commands.Cog):
     async def crear_alias(
         self, interaction: discord.Interaction, obra: str, alias: str
     ):
-        estado, idAlias = servicio_alias_crear(bd=self.bot.bd, obra=obra, alias=alias)
-        embed = embed_alias_crear(estado=estado, obra=obra, alias=alias)
+        resultado = servicio_alias_crear(bd=self.bot.bd, obra=obra, alias=alias)
+        embed = embed_alias_crear(estado=resultado.estado, obra=obra, alias=alias)
 
         await interaction.response.send_message(
             content="Creando un alias...", embed=embed, delete_after=60
         )
 
-        if estado == "SUCCESS":
+        if (
+            resultado.estado == EstadoServicioAliasCrear.SUCCESS
+            and resultado.id_alias is not None
+        ):
             embedLog = embed_alias_log(
-                accion="CREATE",
+                accion=AccionesLogs.CREATE,
                 obra=obra,
                 alias=alias,
                 autor=interaction.user,
-                id_operacion=idAlias,
+                id_operacion=resultado.id_alias,
             )
-            await servicio_alias_log(bot=self.bot, embed_log=embedLog, accion="CREATE")
+            await servicio_alias_log(
+                bot=self.bot, embed_log=embedLog, accion=AccionesLogs.CREATE
+            )
 
-    # TODO: Refacotirzar /eliminar
     @aliasGroup.command(name="eliminar", description="Eliminar un alias existente")
     @app_commands.describe(alias="El alias a eliminar")
     @app_commands.autocomplete(alias=autocompletar_alias)
     @app_commands.checks.has_role(ID_VERIFICADOR)
     async def eliminar_alias(self, interaction: discord.Interaction, alias: str):
-        aliasData = self.bot.bd.aliasObras.obtener_obra_por_alias(alias)
-        if aliasData is None:
-            await interaction.response.send_message(
-                f"No se encontró el alias '{alias}'.", ephemeral=True
-            )
-            return
 
-        idAlias = aliasData["id_alias"]
-        self.bot.bd.aliasObras.eliminar_alias_obra(idAlias)
+        resultado = servicio_alias_eliminar(bd=self.bot.bd, alias=alias)
+
+        embed = embed_alias_eliminar(estado=resultado.estado, alias=alias)
+
         await interaction.response.send_message(
-            f"Alias '{alias}' eliminado.", ephemeral=True
+            content="Eliminando un alias...", embed=embed, delete_after=60
         )
+
+        if resultado.estado == EstadoServicioAliasEliminar.SUCCESS:
+            if resultado.id_eliminado is None or resultado.obra_asociada is None:
+                raise RuntimeError(
+                    "Un resultado exitoso de eliminación debe incluir el ID y la obra."
+                )
+
+            embedLog = embed_alias_log(
+                accion=AccionesLogs.DELETE,
+                obra=resultado.obra_asociada,
+                alias=alias,
+                autor=interaction.user,
+                id_operacion=resultado.id_eliminado,
+            )
+            await servicio_alias_log(
+                bot=self.bot, embed_log=embedLog, accion=AccionesLogs.DELETE
+            )
 
     @aliasGroup.command(
         name="listar", description="Listar todos los alias registrados por obra"
     )
     async def listar_aliases(self, interaction: discord.Interaction):
-        estado, obras = servicio_alias_listar_obras(bd=self.bot.bd)
+        obras = servicio_alias_listar_obras(bd=self.bot.bd)
 
-        embed = embed_alias_listar_inicial(estado=estado)
+        if obras:
+            embed = embed_alias_listar_inicial(estado=EstadoServicioAliasCrear.SUCCESS)
+        else:
+            embed = embed_alias_listar_inicial(
+                estado=EstadoServicioAliasCrear.ERROR_NOT_FOUND
+            )
 
-        view = AliasVista(bd=self.bot.bd, obras=obras)
-        await interaction.response.send_message(
-            "Mostrando alias...\n-# Pulsa los botones para ver otras opciones en el menú desplegable.",
-            embed=embed,
-            view=(view if estado == "SUCCESS" else None),
-            ephemeral=True,
-        )
+        if obras:
+            view = AliasVista(bd=self.bot.bd, obras=obras)
+            await interaction.response.send_message(
+                "Mostrando alias...\n-# Pulsa los botones para ver otras opciones en el menú desplegable.",
+                embed=embed,
+                view=view,
+                ephemeral=True,
+            )
+        else:
+            await interaction.response.send_message(
+                "No hay alias disponibles para mostrar.",
+                embed=embed,
+                ephemeral=True,
+            )
 
     async def cog_app_command_error(
         self, interaction: discord.Interaction, error: app_commands.AppCommandError
     ):
-        embed = discord.Embed(color=discord.Color.darker_gray())
+
         if isinstance(error, CommandOnCooldown):
             tiempo = int(error.retry_after)
             minutos = tiempo // 60
             segundos = tiempo % 60
-            embed.description = f"Espere ⏱️ {minutos} minutos con {segundos} segundos antes de usar este comando nuevamente."
+            embed = generico_error_comando(
+                descripcion=f"Espere ⏱️ {minutos} minutos con {segundos} segundos antes de usar este comando nuevamente."
+            )
         elif isinstance(error, MissingRole):
-            embed.description = (
-                "Esta acción esta reservada para nuestros Archivistas. 🔎"
+            embed = generico_error_comando(
+                descripcion="Esta acción esta reservada para nuestros Archivistas. 🔎"
+            )
+        elif isinstance(error, app_commands.CommandInvokeError):
+            embed = generico_error_comando(
+                descripcion="Ha surgido un error de nuestro lado, lo intentaremos resolver pronto."
+            )
+            bot_logger.error(
+                f"Error no manejado: {error.original}",
+                exc_info=(
+                    type(error.original),
+                    error.original,
+                    error.original.__traceback__,
+                ),
             )
         else:
-            embed.description = "Error desconocido."
-            print(f"Error no manejado: {error}")
-
-        await interaction.response.send_message(
-            embed=embed, ephemeral=True, delete_after=20
-        )
+            embed = generico_error_comando(
+                descripcion="Error desconocido, favor de informar a un administrador."
+            )
+            bot_logger.error(
+                f"Error no manejado: {error}",
+                exc_info=(type(error), error, error.__traceback__),
+            )
+        if not interaction.response.is_done():
+            await interaction.response.send_message(
+                embed=embed, ephemeral=True, delete_after=20
+            )
+        else:
+            await interaction.followup.send(embed=embed, ephemeral=True)
 
 
 async def setup(bot):

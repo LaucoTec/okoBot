@@ -4,7 +4,10 @@ import discord
 
 from db import BaseDeDatos
 from embeds.alias_embeds import embed_alias_listar
-from services.alias_services import servicio_alias_listar_aliases
+from services.alias_services import (
+    EstadoServicioAliasCrear,
+    servicio_alias_listar_aliases,
+)
 
 
 class PaginaBoton(discord.ui.Button):
@@ -25,6 +28,8 @@ class AnteriorBoton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         view = self.view
+        if not isinstance(view, AliasVista):
+            return
 
         view.paginaActual -= 1
         view.actualizar_vista()
@@ -40,6 +45,8 @@ class SiguienteBoton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         view = self.view
+        if not isinstance(view, AliasVista):
+            return
 
         view.paginaActual += 1
         view.actualizar_vista()
@@ -61,12 +68,18 @@ class ObraSeleccionar(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         idObra = self.values[0]
         obraData = self.obras[idObra]
-        estado, aliases = servicio_alias_listar_aliases(bd=self.bd, id_obra=int(idObra))
+        aliases = servicio_alias_listar_aliases(bd=self.bd, id_obra=int(idObra))
 
-        embed = embed_alias_listar(estado=estado, obra=obraData["nombre_obra"])
-
-        if estado == "SUCCESS":
-            embed.description = f"\n".join([f"- {alias['alias']}" for alias in aliases])
+        if aliases:
+            embed = embed_alias_listar(
+                estado=EstadoServicioAliasCrear.SUCCESS, obra=obraData["nombre_obra"]
+            )
+            embed.description = "\n".join([f"- {alias['alias']}" for alias in aliases])
+        else:
+            embed = embed_alias_listar(
+                estado=EstadoServicioAliasCrear.ERROR_NOT_FOUND,
+                obra=obraData["nombre_obra"],
+            )
 
         await interaction.response.edit_message(embed=embed)
 

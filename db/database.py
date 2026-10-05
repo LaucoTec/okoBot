@@ -68,7 +68,7 @@ class BaseDeDatos:
             finally:
                 en_transaccion_var.reset(token)
 
-    def buscarObraPorNombreOAlias(self, nombre: str) -> sql.Row | None:
+    def buscar_obra_por_nombre_o_alias(self, nombre: str) -> sql.Row | None:
         """
         Busca una obra por su nombre o por cualquiera de sus alias.
         Retorna un diccionario con los datos de la obra o None si no se encuentra.

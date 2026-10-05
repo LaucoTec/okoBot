@@ -33,6 +33,8 @@ LOG_COLOR = {
     AccionesLogs.EDIT: Color.pink(),
     AccionesLogs.DELETE: Color.brand_red(),
 }
+# Error en ejecución de comando
+COMMAND_ERROR = Color.dark_gray()
 
 
 # --- Comandos---
@@ -49,6 +51,14 @@ def generico_error(comando: str, motivo: str) -> Embed:
         title=f"Error ejecutando {comando}",
         description=motivo,
         color=COMMAND_COLOR[AccionesComandos.ERROR],
+    )
+
+
+def generico_error_comando(descripcion: str) -> Embed:
+    return Embed(
+        title="Algo no ha salido bien",
+        description=descripcion,
+        color=COMMAND_ERROR,
     )
 
 
