@@ -1,7 +1,7 @@
 import sqlite3 as sql
 
 from db.queries import AsistenteDeConsultas
-from utils import normalizar_texto
+from utils.text_utils import normalizar_texto
 
 
 class RepoAliasObras(AsistenteDeConsultas):

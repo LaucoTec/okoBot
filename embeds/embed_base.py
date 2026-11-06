@@ -2,7 +2,7 @@ from enum import StrEnum
 
 from discord import Color, Embed, Member, User
 
-from utils import obtener_fecha_cdmx
+from utils.time_utils import obtener_fecha_cdmx
 
 
 class AccionesComandos(StrEnum):

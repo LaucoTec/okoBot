@@ -9,7 +9,7 @@ from discord.ext.commands import Bot
 from config import ID_LOGS_OBRAS
 from db import BaseDeDatos
 from logs.loggers import bot_logger
-from utils import obtener_canal_mensajes
+from utils.discord_utils import obtener_canal_mensajes
 
 
 class EstadoServicioAliasCrear(Enum):
