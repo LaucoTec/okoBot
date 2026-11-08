@@ -1,7 +1,6 @@
 from discord import Color, Embed
 
-from models.reservation_models import DatosReserva
-from services.tasks.reservation_state_task import EstadoReserva
+from models.reservation_models import DatosReserva, EstadoReserva
 from utils.time_utils import fecha_a_str
 
 RESERVATION_COLOR = {

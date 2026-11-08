@@ -1,20 +1,14 @@
 from dataclasses import dataclass
-from enum import StrEnum
 
 from discord import HTTPException, Thread
 
 from config import OkoBot
 from db.repos import RepoReservas
 from embeds.reservation_embeds import embed_reserva
+from models.reservation_models import EstadoReserva
 from services.reservation_services import obtener_datos_reserva
 from utils.discord_utils import obtener_canal_mensajes, obtener_mensaje
 from utils.time_utils import obtener_fecha_cdmx, str_a_fecha
-
-
-class EstadoReserva(StrEnum):
-    ACTIVA = "activa"
-    POR_EXPIRAR = "por_expirar"
-    VENCIDA = "vencida"
 
 
 @dataclass

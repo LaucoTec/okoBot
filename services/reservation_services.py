@@ -1,6 +1,5 @@
 from config import OkoBot
-from models.reservation_models import DatosReserva
-from services.tasks.reservation_state_task import EstadoReserva
+from models.reservation_models import DatosReserva, EstadoReserva
 from utils.discord_utils import obtener_usuario
 from utils.time_utils import str_a_fecha
 

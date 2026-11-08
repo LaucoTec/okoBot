@@ -1,7 +1,12 @@
 from dataclasses import dataclass
 from datetime import date, datetime
+from enum import StrEnum
 
-from services.tasks.reservation_state_task import EstadoReserva
+
+class EstadoReserva(StrEnum):
+    ACTIVA = "activa"
+    POR_EXPIRAR = "por_expirar"
+    VENCIDA = "vencida"
 
 
 @dataclass
