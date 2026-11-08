@@ -1,6 +1,6 @@
 from discord.ext import commands
 
-from config import ID_GENERAL, ID_VERIFICACION
+from config import ID_GENERAL, ID_VERIFICACION, OkoBot
 from logs.loggers.db_logger import logger
 
 
@@ -11,7 +11,7 @@ class Eventos(commands.Cog):
     - Enviar mensajes de bienvenida efímeros a nuevos miembros para recordarse la verificación
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: OkoBot):
         self.bot = bot
 
     @commands.Cog.listener()
@@ -29,7 +29,7 @@ class Eventos(commands.Cog):
         # Actualizar BD si supera umbral de 5 mensajes
         if self.bot.conteoMensajes[idUsuario] >= 5:
             try:
-                self.bot.bd.usuarios.actualizarActividad(idUsuario)
+                self.bot.bd.usuarios.actualizar_actividad(idUsuario)
                 self.bot.conteoMensajes[idUsuario] = 0  # Reiniciar conteo
             except Exception as e:
                 logger.error(

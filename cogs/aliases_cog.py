@@ -1,3 +1,5 @@
+from sqlite3 import Error
+
 import discord
 from discord import app_commands
 from discord.app_commands import CommandOnCooldown, MissingRole
@@ -11,7 +13,7 @@ from embeds.alias_embeds import (
     embed_alias_log,
 )
 from embeds.embed_base import AccionesLogs, generico_error_comando
-from logs.loggers.bot_logger import logger as bot_logger
+from logs.loggers import audit_logger, bot_logger, db_logger
 from services.alias_services import (
     EstadoServicioAliasCrear,
     EstadoServicioAliasEliminar,
@@ -85,6 +87,10 @@ class AliasCog(commands.Cog):
                 bot=self.bot, embed_log=embedLog, accion=AccionesLogs.CREATE
             )
 
+        audit_logger.info(
+            f"Alias '{alias} - ID {resultado.id_alias}' creado para la obra '{obra}' por {interaction.user} (ID {interaction.user.id})"
+        )
+
     @aliasGroup.command(name="eliminar", description="Eliminar un alias existente")
     @app_commands.describe(alias="El alias a eliminar")
     @app_commands.autocomplete(alias=autocompletar_alias)
@@ -115,6 +121,10 @@ class AliasCog(commands.Cog):
             await servicio_alias_log(
                 bot=self.bot, embed_log=embedLog, accion=AccionesLogs.DELETE
             )
+
+        audit_logger.info(
+            f"Alias '{alias} - ID {resultado.id_eliminado}' eliminado de la obra '{resultado.obra_asociada}' por {interaction.user} (ID {interaction.user.id})"
+        )
 
     @aliasGroup.command(
         name="listar", description="Listar todos los alias registrados por obra"
@@ -163,14 +173,24 @@ class AliasCog(commands.Cog):
             embed = generico_error_comando(
                 descripcion="Ha surgido un error de nuestro lado, lo intentaremos resolver pronto."
             )
-            bot_logger.error(
-                f"Error no manejado: {error.original}",
-                exc_info=(
-                    type(error.original),
-                    error.original,
-                    error.original.__traceback__,
-                ),
-            )
+            if isinstance(error.original, Error):
+                db_logger.error(
+                    f"Error no manejado: {error.original}",
+                    exc_info=(
+                        type(error.original),
+                        error.original,
+                        error.original.__traceback__,
+                    ),
+                )
+            else:
+                bot_logger.error(
+                    f"Error no manejado: {error.original}",
+                    exc_info=(
+                        type(error.original),
+                        error.original,
+                        error.original.__traceback__,
+                    ),
+                )
         else:
             embed = generico_error_comando(
                 descripcion="Error desconocido, favor de informar a un administrador."

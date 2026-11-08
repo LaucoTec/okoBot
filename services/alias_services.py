@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from sqlite3 import SQLITE_CONSTRAINT_UNIQUE, IntegrityError, Row
+from sqlite3 import SQLITE_CONSTRAINT_UNIQUE, Error, Row
 
 from discord import Embed, HTTPException, app_commands
 from discord.abc import Messageable
@@ -8,7 +8,7 @@ from discord.ext.commands import Bot
 
 from config import ID_LOGS_OBRAS
 from db import BaseDeDatos
-from logs.loggers import bot_logger
+from logs.loggers import bot_logger, db_logger
 from utils.discord_utils import obtener_canal_mensajes
 
 
@@ -160,7 +160,10 @@ def servicio_alias_crear(
         idAlias = bd.aliasObras.crear_alias_obra(
             alias=alias, id_obra=obraData["id_obra"]
         )
-    except IntegrityError as e:
+    except Error as e:
+        db_logger.error(
+            f"Error al crear alias '{alias}' para obra '{obra}': {e}", exc_info=True
+        )
         if e.sqlite_errorcode == SQLITE_CONSTRAINT_UNIQUE:
             return ResultadoServicioCrearAlias(
                 estado=EstadoServicioAliasCrear.ERROR_REPEATED, id_alias=None
