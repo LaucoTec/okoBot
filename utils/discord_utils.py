@@ -11,8 +11,6 @@ from discord import (
 from discord.abc import GuildChannel
 from discord.ext import commands
 
-from config import ID_SERVER
-
 
 async def _obtener_servidor(bot: commands.Bot, server_id: int) -> Guild | None:
     servidor = bot.get_guild(server_id)
@@ -40,8 +38,10 @@ async def obtener_usuario(bot: commands.Bot, usuario_id: int) -> User | None:
     return usuario
 
 
-async def obtener_miembro(bot: commands.Bot, usuario_id: int) -> Member | None:
-    servidor = await _obtener_servidor(bot=bot, server_id=ID_SERVER)
+async def obtener_miembro(
+    bot: commands.Bot, servidor_id: int, usuario_id: int
+) -> Member | None:
+    servidor = await _obtener_servidor(bot=bot, server_id=servidor_id)
 
     if servidor is None:
         return None
