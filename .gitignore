@@ -13,6 +13,8 @@ logs/files/
 
 # Database files
 *.db
+*.db-shm
+*.db-wal
 
 # VSCode
 .vscode/
