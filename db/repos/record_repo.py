@@ -1,7 +1,6 @@
 import sqlite3 as sql
 
 from db.queries import AsistenteDeConsultas
-from logs.loggers.db_logger import logger
 from utils.text_utils import normalizar_texto
 
 
@@ -13,260 +12,166 @@ class RepoFichas(AsistenteDeConsultas):
         id_obra: int,
         id_hilo: int,
         id_mensaje: int,
-    ) -> int | None:
+    ) -> int:
         """Crea una nueva ficha de personaje para un usuario en una obra específica."""
-        try:
-            nombre_normalizado = normalizar_texto(nombre_personaje)
-            cursor = self.ejecutar(
-                """
-                INSERT INTO fichas (id_propietario, nombre_personaje, nombre_normalizado, id_obra, id_hilo, id_mensaje) 
-                VALUES (?, ?, ?, ?, ?, ?);
-            """,
-                (
-                    id_propietario,
-                    nombre_personaje,
-                    nombre_normalizado,
-                    id_obra,
-                    id_hilo,
-                    id_mensaje,
-                ),
-            )
 
-            return cursor.lastrowid
+        nombre_normalizado = normalizar_texto(nombre_personaje)
+        cursor = self.ejecutar(
+            """
+            INSERT INTO fichas (id_propietario, nombre_personaje, nombre_normalizado, id_obra, id_hilo, id_mensaje) 
+            VALUES (?, ?, ?, ?, ?, ?);
+        """,
+            (
+                id_propietario,
+                nombre_personaje,
+                nombre_normalizado,
+                id_obra,
+                id_hilo,
+                id_mensaje,
+            ),
+        )
 
-        except sql.Error as e:
-            logger.error(
-                f"Error creando ficha para usuario {id_propietario}: {e}", exc_info=True
-            )
-            raise
+        id_ficha = cursor.lastrowid
+        if id_ficha is None:
+            raise RuntimeError("No se pudo obtener el ID de la nueva ficha.")
+
+        return id_ficha
 
     def obtener_ficha_por_id(self, id_ficha: int) -> sql.Row | None:
         """Obtiene una ficha de personaje por su ID."""
-        try:
-            return self.consulta_uno(
-                """
-                SELECT * FROM fichas WHERE id_ficha = ?;
-            """,
-                (id_ficha,),
-            )
 
-        except sql.Error as e:
-            logger.error(f"Error obteniendo ficha {id_ficha}: {e}", exc_info=True)
-            return None
+        return self.consulta_uno(
+            """
+            SELECT * FROM fichas WHERE id_ficha = ?;
+        """,
+            (id_ficha,),
+        )
 
     def obtener_fichas(self) -> list[sql.Row]:
         """Obtiene todas las fichas de personajes registradas en la base de datos."""
-        try:
-            return self.consulta_todos("""
-                SELECT * FROM fichas;
-            """)
 
-        except sql.Error as e:
-            logger.error(f"Error obteniendo todas las fichas: {e}", exc_info=True)
-            return []
+        return self.consulta_todos("""
+            SELECT * FROM fichas;
+        """)
 
     def obtener_ficha_por_nombre_normalizado(
         self, nombre_normalizado: str
     ) -> sql.Row | None:
         """Obtiene una ficha de personaje por su nombre normalizado."""
-        try:
-            return self.consulta_uno(
-                """
-                SELECT * FROM fichas WHERE nombre_normalizado = ?;
-            """,
-                (nombre_normalizado,),
-            )
 
-        except sql.Error as e:
-            logger.error(
-                f"Error obteniendo ficha por nombre '{nombre_normalizado}': {e}",
-                exc_info=True,
-            )
-            return None
+        return self.consulta_uno(
+            """
+            SELECT * FROM fichas WHERE nombre_normalizado = ?;
+        """,
+            (nombre_normalizado,),
+        )
 
     # TODO: Revisar si es necesaria esta función
     def obtener_fichas_por_nombre_normalizado(
         self, nombre_normalizado: str
     ) -> list[sql.Row]:
         """Obtiene todas las fichas de personajes que coinciden con un nombre normalizado."""
-        try:
-            return self.consulta_todos(
-                """
-                SELECT * FROM fichas WHERE nombre_normalizado = ? ORDER BY fecha_creacion DESC;
-            """,
-                (nombre_normalizado,),
-            )
 
-        except sql.Error as e:
-            logger.error(
-                f"Error obteniendo fichas por nombre '{nombre_normalizado}': {e}",
-                exc_info=True,
-            )
-            return []
+        return self.consulta_todos(
+            """
+            SELECT * FROM fichas WHERE nombre_normalizado = ? ORDER BY fecha_creacion DESC;
+        """,
+            (nombre_normalizado,),
+        )
 
     def obtener_fichas_por_usuario(self, id_propietario: int) -> list[sql.Row]:
         """Obtiene todas las fichas de personajes creadas por un usuario específico."""
-        try:
-            return self.consulta_todos(
-                """
-                SELECT * FROM fichas WHERE id_propietario = ? ORDER BY fecha_creacion DESC;
-            """,
-                (id_propietario,),
-            )
 
-        except sql.Error as e:
-            logger.error(
-                f"Error obteniendo fichas para usuario {id_propietario}: {e}",
-                exc_info=True,
-            )
-            return []
+        return self.consulta_todos(
+            """
+            SELECT * FROM fichas WHERE id_propietario = ? ORDER BY fecha_creacion DESC;
+        """,
+            (id_propietario,),
+        )
 
     def obtener_fichas_por_obra(self, id_obra: int) -> list[sql.Row]:
         """Obtiene todas las fichas de personajes asociadas a una obra específica."""
-        try:
-            return self.consulta_todos(
-                """
-                SELECT * FROM fichas WHERE id_obra = ? ORDER BY fecha_creacion DESC;
-            """,
-                (id_obra,),
-            )
 
-        except sql.Error as e:
-            logger.error(
-                f"Error obteniendo fichas para obra {id_obra}: {e}", exc_info=True
-            )
-            return []
+        return self.consulta_todos(
+            """
+            SELECT * FROM fichas WHERE id_obra = ? ORDER BY fecha_creacion DESC;
+        """,
+            (id_obra,),
+        )
 
     def obtener_fichas_por_usuario_y_estado(
         self, id_propietario: int, estado: str
     ) -> list[sql.Row]:
         """Obtiene todas las fichas de personajes creadas por un usuario específico con un estado determinado (activa o eliminada)."""
-        try:
-            return self.consulta_todos(
-                """
-                SELECT * FROM fichas WHERE id_propietario = ? AND estado = ? ORDER BY fecha_creacion DESC;
-            """,
-                (id_propietario, estado),
-            )
 
-        except sql.Error as e:
-            logger.error(
-                f"Error obteniendo fichas para usuario {id_propietario} con estado '{estado}': {e}",
-                exc_info=True,
-            )
-            return []
+        return self.consulta_todos(
+            """
+            SELECT * FROM fichas WHERE id_propietario = ? AND estado = ? ORDER BY fecha_creacion DESC;
+        """,
+            (id_propietario, estado),
+        )
 
     def obtener_fichas_eliminadas_antiguas(self, dias: int) -> list[sql.Row]:
         """Obtiene todas las fichas de personajes que han estado en estado 'eliminada' por más de un número determinado de días."""
-        try:
-            return self.consulta_todos(
-                """
-                SELECT * FROM fichas
-                WHERE estado = 'eliminada'
-                  AND fecha_estado <= DATETIME('now', ?)
-            """,
-                (f"-{dias} days",),
-            )
 
-        except sql.Error as e:
-            logger.error(
-                f"Error obteniendo fichas eliminadas antiguas: {e}", exc_info=True
-            )
-            return []
+        return self.consulta_todos(
+            """
+            SELECT * FROM fichas
+            WHERE estado = 'eliminada'
+                AND fecha_estado <= DATETIME('now', ?)
+        """,
+            (f"-{dias} days",),
+        )
 
     def actualizar_nombre_ficha(self, id_ficha: int, nuevo_nombre: str) -> bool:
         """Actualiza el nombre de un personaje en una ficha específica."""
-        try:
-            nombre_normalizado = normalizar_texto(nuevo_nombre)
-            cursor = self.ejecutar(
-                """
-                UPDATE fichas SET nombre_personaje = ?, nombre_normalizado = ? WHERE id_ficha = ?;
-            """,
-                (nuevo_nombre, nombre_normalizado, id_ficha),
-            )
 
-            return cursor.rowcount > 0
+        nombre_normalizado = normalizar_texto(nuevo_nombre)
+        cursor = self.ejecutar(
+            """
+            UPDATE fichas SET nombre_personaje = ?, nombre_normalizado = ? WHERE id_ficha = ?;
+        """,
+            (nuevo_nombre, nombre_normalizado, id_ficha),
+        )
 
-        except sql.Error as e:
-            logger.error(
-                f"Error actualizando nombre de ficha {id_ficha}: {e}", exc_info=True
-            )
-            raise
+        return cursor.rowcount > 0
 
     def actualizar_obra_ficha(self, id_ficha: int, nuevo_id_obra: int) -> bool:
         """Actualiza la obra asociada a una ficha de personaje específica."""
-        try:
-            cursor = self.ejecutar(
-                """
-                UPDATE fichas SET id_obra = ? WHERE id_ficha = ?;
-            """,
-                (nuevo_id_obra, id_ficha),
-            )
 
-            return cursor.rowcount > 0
+        cursor = self.ejecutar(
+            """
+            UPDATE fichas SET id_obra = ? WHERE id_ficha = ?;
+        """,
+            (nuevo_id_obra, id_ficha),
+        )
 
-        except sql.Error as e:
-            logger.error(
-                f"Error actualizando obra de ficha {id_ficha}: {e}", exc_info=True
-            )
-            raise
+        return cursor.rowcount > 0
 
     def actualizar_estado_ficha(self, id_ficha: int, nuevo_estado: str) -> bool:
         """Actualiza el estado de una ficha de personaje específica (activa o eliminada)."""
+
         if nuevo_estado not in ("activa", "eliminada"):
-            logger.warning(f"Estado inválido para ficha {id_ficha}: {nuevo_estado}")
-            return False
+            raise ValueError("El estado debe ser 'activa' o 'eliminada'.")
 
-        try:
-            cursor = self.ejecutar(
-                """
-                UPDATE fichas SET estado = ?, fecha_estado = CURRENT_TIMESTAMP WHERE id_ficha = ?;
-            """,
-                (nuevo_estado, id_ficha),
-            )
+        cursor = self.ejecutar(
+            """
+            UPDATE fichas SET estado = ?, fecha_estado = CURRENT_TIMESTAMP WHERE id_ficha = ?;
+        """,
+            (nuevo_estado, id_ficha),
+        )
 
-            return cursor.rowcount > 0
-
-        except sql.Error as e:
-            logger.error(
-                f"Error actualizando estado de ficha {id_ficha}: {e}", exc_info=True
-            )
-            raise
+        return cursor.rowcount > 0
 
     def eliminar_ficha_definitivo(self, id_ficha: int) -> bool:
         """Elimina definitivamente una ficha de personaje de la base de datos."""
-        try:
-            cursor = self.ejecutar(
-                """
-                DELETE FROM fichas WHERE id_ficha = ?;
-            """,
-                (id_ficha,),
-            )
 
-            return cursor.rowcount > 0
+        cursor = self.ejecutar(
+            """
+            DELETE FROM fichas WHERE id_ficha = ?;
+        """,
+            (id_ficha,),
+        )
 
-        except sql.Error as e:
-            logger.error(
-                f"Error eliminando definitivamente ficha {id_ficha}: {e}", exc_info=True
-            )
-            raise
+        return cursor.rowcount > 0
 
-    # TODO Refactorizar servicio para eliminar esta función
-    def marcarFichasEliminadasPorUsuario(self, id_usuario: int):
-        try:
-            cursor = self.ejecutar(
-                """
-                UPDATE fichas SET estado = 'eliminada', fecha_estado = CURRENT_TIMESTAMP
-                WHERE id_propietario = ? AND estado = 'activa'
-            """,
-                (id_usuario,),
-            )
-
-            return cursor is not None and cursor.rowcount
-
-        except sql.Error as e:
-            logger.error(
-                f"Error marcando fichas como eliminadas para usuario {id_usuario}: {e}",
-                exc_info=True,
-            )
-            raise
