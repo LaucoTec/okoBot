@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from config import OkoBot
+from config import ID_SERVER, OkoBot
 from utils.discord_utils import obtener_miembro, obtener_usuario
 
 
@@ -21,7 +21,9 @@ async def obtener_usuarios_ausentes(bot: OkoBot) -> ResultadoUsuariosAusentes:
     usuarios_ausentes = []
 
     for usuario in usuarios:
-        if not await obtener_miembro(bot, usuario["id_usuario"]):
+        if not await obtener_miembro(
+            bot=bot, servidor_id=ID_SERVER, usuario_id=usuario["id_usuario"]
+        ):
             ausente = await obtener_usuario(bot, usuario["id_usuario"])
             if ausente:
                 usuarios_ausentes.append(

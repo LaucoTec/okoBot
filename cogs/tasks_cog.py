@@ -99,33 +99,18 @@ class TareasCog(commands.Cog):
 
     async def tarea_aviso_pre_mensual(self):
         bot_logger.info("--Enviando aviso pre-mensual...")
-        # Lógica para enviar aviso pre-mensual
-        try:
-            await servicio_enviar_aviso_pre_mensual(self.bot)
-        except Exception as e:
-            bot_logger.error(
-                f"Error al ejecutar tarea de aviso pre-mensual: {e}", exc_info=True
-            )
+
+        await servicio_enviar_aviso_pre_mensual(self.bot)
 
     async def tarea_purgar_usuarios_ausentes(self):
-        try:
-            resultado = await servicio_purgar_usuarios_ausentes(self.bot)
-            await servicio_log_purgar_usuarios_ausentes(self.bot, resultado)
-        except Exception as e:
-            bot_logger.error(
-                f"Error al ejecutar tarea de purga de usuarios ausentes: {e}",
-                exc_info=True,
-            )
+
+        resultado = await servicio_purgar_usuarios_ausentes(self.bot)
+        await servicio_log_purgar_usuarios_ausentes(self.bot, resultado)
 
     async def tarea_desactivar_usuarios_inactivos(self):
-        try:
-            resultado = await servicio_desactivar_usuarios_inactivos(self.bot)
-            await servicio_log_desactivar_usuarios_inactivos(self.bot, resultado)
-        except Exception as e:
-            bot_logger.error(
-                f"Error al ejecutar tarea de desactivación de usuarios inactivos: {e}",
-                exc_info=True,
-            )
+
+        resultado = await servicio_desactivar_usuarios_inactivos(self.bot)
+        await servicio_log_desactivar_usuarios_inactivos(self.bot, resultado)
 
     # Se ejecuta diariamente a las 00:01 hora CDMX
     @tasks.loop(time=diarias)
@@ -162,6 +147,27 @@ class TareasCog(commands.Cog):
         await self.tarea_purgar_usuarios_ausentes()
         # Ejecutar la tarea de desactivación de usuarios inactivos
         await self.tarea_desactivar_usuarios_inactivos()
+
+    @tareas_diarias.error
+    async def tareas_diarias_error(self, error: BaseException):
+        bot_logger.error(
+            "Error inesperado en el loop de tareas diarias.",
+            exc_info=(type(error), error, error.__traceback__),
+        )
+
+    @aviso_pre_mensual.error
+    async def aviso_pre_mensual_error(self, error: BaseException):
+        bot_logger.error(
+            "Error inesperado en el loop de aviso pre-mensual.",
+            exc_info=(type(error), error, error.__traceback__),
+        )
+
+    @tareas_mensuales.error
+    async def tareas_mensuales_error(self, error: BaseException):
+        bot_logger.error(
+            "Error inesperado en el loop de tareas mensuales.",
+            exc_info=(type(error), error, error.__traceback__),
+        )
 
 
 async def setup(bot: OkoBot):

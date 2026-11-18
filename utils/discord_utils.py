@@ -44,7 +44,7 @@ async def obtener_miembro(
     servidor = await _obtener_servidor(bot=bot, server_id=servidor_id)
 
     if servidor is None:
-        return None
+        raise ValueError(f"No se pudo obtener el servidor con ID {servidor_id}")
 
     miembro = servidor.get_member(usuario_id)
 
