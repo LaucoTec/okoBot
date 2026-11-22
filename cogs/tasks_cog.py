@@ -1,7 +1,9 @@
+from sqlite3 import Error
+
 from discord.ext import commands, tasks
 
 from config import OkoBot
-from logs.loggers.bot_logger import logger as bot_logger
+from logs.loggers import bot_logger, db_logger
 from services.daily_tasks_services import (
     servicio_actualizar_estados_reservas,
     servicio_integridad_ids,
@@ -48,50 +50,32 @@ class TareasCog(commands.Cog):
         self.aviso_pre_mensual.cancel()
 
     async def tarea_integridad_ids(self):
-        try:
-            resultado_integridad = await servicio_integridad_ids(self.bot)
-            await servicio_log_integridad_ids(self.bot, resultado_integridad)
-        except Exception as e:
-            bot_logger.error(
-                f"Error al ejecutar tarea de integridad: {e}", exc_info=True
-            )
+
+        resultado_integridad = await servicio_integridad_ids(self.bot)
+        await servicio_log_integridad_ids(self.bot, resultado_integridad)
 
     async def tarea_estado_reservas(self):
-        try:
-            resultado_estados = await servicio_actualizar_estados_reservas(bot=self.bot)
-            await servicio_log_actualizar_estados_reservas(
-                bot=self.bot, resultado=resultado_estados
-            )
-        except Exception as e:
-            bot_logger.error(
-                f"Error al ejecutar tarea de actualización de estados: {e}",
-                exc_info=True,
-            )
+
+        resultado_estados = await servicio_actualizar_estados_reservas(bot=self.bot)
+        await servicio_log_actualizar_estados_reservas(
+            bot=self.bot, resultado=resultado_estados
+        )
 
     async def tarea_sincronizacion_obras(self):
-        try:
-            resultado_sincronizacion = await servicio_sincronizar_obras(bot=self.bot)
-            await servicio_log_sincronizar_obras(
-                bot=self.bot, resultado=resultado_sincronizacion
-            )
-        except Exception as e:
-            bot_logger.error(
-                f"Error al ejecutar tarea de sinronización de obras: {e}", exc_info=True
-            )
+
+        resultado_sincronizacion = await servicio_sincronizar_obras(bot=self.bot)
+        await servicio_log_sincronizar_obras(
+            bot=self.bot, resultado=resultado_sincronizacion
+        )
 
     async def tarea_purgar_registros_antiguos(self):
-        try:
-            resultado_purga = servicio_purgar_registros_antiguos(
-                bd=self.bot.bd, dias_tolerancia=7
-            )
-            await servicio_log_purgar_registros_antiguos(
-                bot=self.bot, resultado=resultado_purga
-            )
-        except Exception as e:
-            bot_logger.error(
-                f"Error al ejecutar tarea de purga de registros antiguos: {e}",
-                exc_info=True,
-            )
+
+        resultado_purga = servicio_purgar_registros_antiguos(
+            bd=self.bot.bd, dias_tolerancia=7
+        )
+        await servicio_log_purgar_registros_antiguos(
+            bot=self.bot, resultado=resultado_purga
+        )
 
     def tarea_actividad_diaria(self):
         bot_logger.info("--Reiniciando conteo de actividad diaria...")
@@ -150,10 +134,16 @@ class TareasCog(commands.Cog):
 
     @tareas_diarias.error
     async def tareas_diarias_error(self, error: BaseException):
-        bot_logger.error(
-            "Error inesperado en el loop de tareas diarias.",
-            exc_info=(type(error), error, error.__traceback__),
-        )
+        if isinstance(error, Error):
+            db_logger.error(
+                "Error de base de datos en el loop de tareas diarias.",
+                exc_info=(type(error), error, error.__traceback__),
+            )
+        else:
+            bot_logger.error(
+                "Error inesperado en el loop de tareas diarias.",
+                exc_info=(type(error), error, error.__traceback__),
+            )
 
     @aviso_pre_mensual.error
     async def aviso_pre_mensual_error(self, error: BaseException):
@@ -164,10 +154,16 @@ class TareasCog(commands.Cog):
 
     @tareas_mensuales.error
     async def tareas_mensuales_error(self, error: BaseException):
-        bot_logger.error(
-            "Error inesperado en el loop de tareas mensuales.",
-            exc_info=(type(error), error, error.__traceback__),
-        )
+        if isinstance(error, Error):
+            db_logger.error(
+                "Error de base de datos en el loop de tareas mensuales.",
+                exc_info=(type(error), error, error.__traceback__),
+            )
+        else:
+            bot_logger.error(
+                "Error inesperado en el loop de tareas mensuales.",
+                exc_info=(type(error), error, error.__traceback__),
+            )
 
 
 async def setup(bot: OkoBot):
