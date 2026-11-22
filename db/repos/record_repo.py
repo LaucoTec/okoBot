@@ -123,6 +123,15 @@ class RepoFichas(AsistenteDeConsultas):
             (f"-{dias} days",),
         )
 
+    def obtener_fichas_pendientes(self) -> list[sql.Row]:
+        """Obtiene todas las fichas de personajes que no han sido sincronizadas con el sistema externo."""
+
+        return self.consulta_todos(
+            """
+            SELECT * FROM fichas WHERE sincronizado != 0;
+        """
+        )
+
     def actualizar_nombre_ficha(self, id_ficha: int, nuevo_nombre: str) -> bool:
         """Actualiza el nombre de un personaje en una ficha específica."""
 
@@ -163,6 +172,23 @@ class RepoFichas(AsistenteDeConsultas):
 
         return cursor.rowcount > 0
 
+    def actualizar_sincronizacion_ficha(self, id_ficha: int, nuevo_estado: int) -> bool:
+        """Actualiza el estado de sincronización de una ficha de personaje específica."""
+
+        if nuevo_estado not in (0, 1, 2, 3):
+            raise ValueError(
+                "El estado de sincronización debe ser 0 (sincronizado), 1 (desincronizado), 2 (sin ID de mensaje) o 3 (referencia inválida)."
+            )
+
+        cursor = self.ejecutar(
+            """
+            UPDATE fichas SET sincronizado = ? WHERE id_ficha = ?;
+        """,
+            (nuevo_estado, id_ficha),
+        )
+
+        return cursor.rowcount > 0
+
     def eliminar_ficha_definitivo(self, id_ficha: int) -> bool:
         """Elimina definitivamente una ficha de personaje de la base de datos."""
 
@@ -174,4 +200,3 @@ class RepoFichas(AsistenteDeConsultas):
         )
 
         return cursor.rowcount > 0
-

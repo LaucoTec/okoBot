@@ -166,6 +166,15 @@ class RepoReservas(AsistenteDeConsultas):
             (f"-{dias} days",),
         )
 
+    def obtener_reservas_pendientes(self) -> list[sql.Row]:
+        """Obtiene todas las reservas que no han sido sincronizadas con el sistema externo."""
+
+        return self.consulta_todos(
+            """
+            SELECT * FROM reservas WHERE sincronizado != 0;
+        """
+        )
+
     def actualizar_expiracion_reserva(self, id_reserva: int, fecha_fin: str) -> bool:
         """Renueva la fecha de expiración de una reserva y la marca como activa."""
 
@@ -234,6 +243,25 @@ class RepoReservas(AsistenteDeConsultas):
             UPDATE reservas SET id_obra = ? WHERE id_reserva = ?;
         """,
             (nuevo_id_obra, id_reserva),
+        )
+
+        return cursor.rowcount > 0
+
+    def actualizar_sincronizacion_reserva(
+        self, id_reserva: int, nuevo_estado: int
+    ) -> bool:
+        """Actualiza el estado de sincronización de una reserva."""
+
+        if nuevo_estado not in (0, 1, 2, 3):
+            raise ValueError(
+                "El estado de sincronización debe ser 0 (sincronizado), 1 (desincronizado), 2 (sin ID de mensaje) o 3 (referencia inválida)."
+            )
+
+        cursor = self.ejecutar(
+            """
+            UPDATE reservas SET sincronizado = ? WHERE id_reserva = ?;
+        """,
+            (nuevo_estado, id_reserva),
         )
 
         return cursor.rowcount > 0

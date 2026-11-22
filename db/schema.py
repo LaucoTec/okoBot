@@ -47,7 +47,8 @@ def iniciar_bd(conn: Connection):
             id_mensaje INTEGER NOT NULL UNIQUE,
             estado TEXT DEFAULT 'activa' CHECK(estado IN ('activa', 'eliminada')),
             fecha_creacion  TEXT DEFAULT CURRENT_TIMESTAMP,
-            fecha_estado TEXT DEFAULT CURRENT_TIMESTAMP
+            fecha_estado TEXT DEFAULT CURRENT_TIMESTAMP,
+            sincronizado INTEGER DEFAULT 1 CHECK(sincronizado IN (0, 1, 2, 3))
             );
             """)
 
@@ -65,7 +66,8 @@ def iniciar_bd(conn: Connection):
             estado TEXT DEFAULT 'activa' CHECK(estado IN ('activa', 'vencida', 'por_expirar')),
             enlace_imagen TEXT  NOT NULL,
             id_hilo INTEGER NOT NULL,
-            id_mensaje INTEGER UNIQUE
+            id_mensaje INTEGER UNIQUE,
+            sincronizado INTEGER DEFAULT 1 CHECK(sincronizado IN (0, 1, 2, 3))
             );
             """)
 
