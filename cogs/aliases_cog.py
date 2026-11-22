@@ -87,9 +87,9 @@ class AliasCog(commands.Cog):
                 bot=self.bot, embed_log=embedLog, accion=AccionesLogs.CREATE
             )
 
-        audit_logger.info(
-            f"Alias '{alias} - ID {resultado.id_alias}' creado para la obra '{obra}' por {interaction.user} (ID {interaction.user.id})"
-        )
+            audit_logger.info(
+                f"Alias '{alias} - ID {resultado.id_alias}' creado para la obra '{obra}' por {interaction.user} (ID {interaction.user.id})"
+            )
 
     @aliasGroup.command(name="eliminar", description="Eliminar un alias existente")
     @app_commands.describe(alias="El alias a eliminar")
@@ -122,9 +122,9 @@ class AliasCog(commands.Cog):
                 bot=self.bot, embed_log=embedLog, accion=AccionesLogs.DELETE
             )
 
-        audit_logger.info(
-            f"Alias '{alias} - ID {resultado.id_eliminado}' eliminado de la obra '{resultado.obra_asociada}' por {interaction.user} (ID {interaction.user.id})"
-        )
+            audit_logger.info(
+                f"Alias '{alias} - ID {resultado.id_eliminado}' eliminado de la obra '{resultado.obra_asociada}' por {interaction.user} (ID {interaction.user.id})"
+            )
 
     @aliasGroup.command(
         name="listar", description="Listar todos los alias registrados por obra"
