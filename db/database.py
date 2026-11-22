@@ -60,7 +60,7 @@ class BaseDeDatos:
             try:
                 yield
 
-            except Exception:
+            except sql.Error:
                 self.conexion.rollback()
                 raise
             else:
