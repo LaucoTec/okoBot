@@ -17,7 +17,6 @@ class RegistroAntiguo:
 class ResultadoLimpiezaRegistros:
     fichas_antiguas: list[RegistroAntiguo]
     reservas_antiguas: list[RegistroAntiguo]
-    registros_purgados: int
 
 
 def _antiguedad_fichas(repo_fichas: RepoFichas, dias: int) -> list[RegistroAntiguo]:
@@ -54,10 +53,8 @@ def detectar_registros_antiguos(
     reservas_antiguas = _antiguedad_reservas(
         repo_reservas=bd.reservas, dias=dias_tolerancia
     )
-    registros_purgados = len(fichas_antiguas) + len(reservas_antiguas)
 
     return ResultadoLimpiezaRegistros(
         fichas_antiguas=fichas_antiguas,
         reservas_antiguas=reservas_antiguas,
-        registros_purgados=registros_purgados,
     )

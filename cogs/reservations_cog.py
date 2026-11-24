@@ -1,6 +1,5 @@
 import asyncio
 from datetime import datetime, timedelta
-from typing import List
 from zoneinfo import ZoneInfo
 
 import discord
@@ -323,7 +322,7 @@ class reservaModal(discord.ui.Modal, title="Crear Reserva de Apariencia"):
             return None, 0
 
     async def revisarDuplicados(self, idObra, nombrePj, interaction):
-        reservas = self.bot.bd.reservas.obtenerReservasPorObra(idObra)
+        reservas = self.bot.bd.reservas.obtener_reservas_por_obra(idObra)
         idUsuario = interaction.user.id
         nombreNorm = normalizar_texto(nombrePj)
 
@@ -380,9 +379,9 @@ class reservaModal(discord.ui.Modal, title="Crear Reserva de Apariencia"):
             mensaje += (
                 "Mientras tanto, tu reserva estará guardada en un canal temporal.\n\n"
             )
-            obra = dict(bd.obras.obtenerObra(3))
+            obra = dict(bd.obras.obtener_obra_por_id(3))
         else:
-            obra = bd.buscarObraPorNombreOAlias(obraIngresada)
+            obra = bd.buscar_obra_por_nombre_o_alias(obraIngresada)
             if obra is None:
                 await interaction.response.send_message(
                     f"No se encontró la obra '{obraIngresada}'. Por favor, verifica el nombre o alias e inténtalo de nuevo.",
@@ -391,7 +390,7 @@ class reservaModal(discord.ui.Modal, title="Crear Reserva de Apariencia"):
                 return
 
         embed = discord.Embed(
-            title=f"Reserva recibida", color=discord.Color.brand_green()
+            title="Reserva recibida", color=discord.Color.brand_green()
         )
         contenido = f"Nombre: {nombre}\nObra: {obra['nombre_obra']}\n"
 
@@ -400,7 +399,7 @@ class reservaModal(discord.ui.Modal, title="Crear Reserva de Apariencia"):
         )
         if estado == "BLOQUEO_OCUPADO":
             embed.color = discord.Color.red()
-            embed.description = f"Ya existe una reserva para este personaje.\nVuelva a verificar o reserve a otro."
+            embed.description = "Ya existe una reserva para este personaje.\nVuelva a verificar o reserve a otro."
             mensaje = "Operación cancelada."
             await interaction.response.send_message(
                 content=mensaje, embed=embed, delete_after=20, ephemeral=True
@@ -408,7 +407,7 @@ class reservaModal(discord.ui.Modal, title="Crear Reserva de Apariencia"):
             return
         elif estado == "BLOQUEO_RECIENTE":
             embed.color = discord.Color.dark_red()
-            embed.description = f"Esta reserva fue eliminada o expiró recientemente. \n Espere unos días antes de poderlo volver a reservar."
+            embed.description = "Esta reserva fue eliminada o expiró recientemente. \n Espere unos días antes de poderlo volver a reservar."
             mensaje = "Operación cancelada."
             await interaction.response.send_message(
                 content=mensaje, embed=embed, delete_after=20, ephemeral=True
@@ -561,7 +560,7 @@ class ReservaCog(commands.Cog):
                 f"**Expira:** {finStr}"
             )
         else:
-            embed.description = f"**Inicio:** {inicioStr}\n" f"**Expira:** {finStr}"
+            embed.description = f"**Inicio:** {inicioStr}\n**Expira:** {finStr}"
 
         embed.set_image(url=data["url_imagen"])
 
@@ -597,7 +596,7 @@ class ReservaCog(commands.Cog):
         self,
         interaction: discord.Interaction,
         current: str,
-    ) -> List[app_commands.Choice[str]]:
+    ) -> list[app_commands.Choice[str]]:
         bd = interaction.client.bd
         userID = interaction.user.id
 
@@ -620,7 +619,7 @@ class ReservaCog(commands.Cog):
         self,
         interaction: discord.Interaction,
         current: str,
-    ) -> List[app_commands.Choice[str]]:
+    ) -> list[app_commands.Choice[str]]:
         bd = interaction.client.bd
         userID = interaction.user.id
 
@@ -659,7 +658,7 @@ class ReservaCog(commands.Cog):
         self,
         interaction: discord.Interaction,
         current: str,
-    ) -> List[app_commands.Choice[str]]:
+    ) -> list[app_commands.Choice[str]]:
         """Sugiere obras existentes conforme escribe."""
         if len(current) < 2:
             todasObras = self.bot.bd.obras.obtenerObras()
@@ -681,11 +680,11 @@ class ReservaCog(commands.Cog):
     @reservaGroup.command(
         name="crear", description="Crear una nueva reserva de apariencia"
     )
-    @app_commands.checks.cooldown(1, 60.0, key=lambda i: (i.user.id))
+    @app_commands.checks.cooldown(1, 60.0, key=lambda i: i.user.id)
     async def crearReserva(self, interaction: discord.Interaction):
         idUsuario = interaction.user.id
-        self.bot.bd.usuarios.crearUsuario(interaction.user.id)
-        self.bot.bd.usuarios.actualizarActividad(interaction.user.id)
+        self.bot.bd.usuarios.crear_usuario(interaction.user.id)
+        self.bot.bd.usuarios.actualizar_actividad(interaction.user.id)
 
         if idUsuario in self.bot.reservasPendientes:
             await interaction.response.send_message(
@@ -694,9 +693,9 @@ class ReservaCog(commands.Cog):
             )
             return
 
-        reservas = self.bot.bd.reservas.obtenerReservasPorUsuario(idUsuario)
-        fichas = self.bot.bd.fichas.obtenerFichasPorUsuario(idUsuario)
-        perfil = self.bot.bd.usuarios.obtenerUsuario(idUsuario)
+        reservas = self.bot.bd.reservas.obtener_reservas_por_usuario(idUsuario)
+        fichas = self.bot.bd.fichas.obtener_fichas_por_usuario(idUsuario)
+        perfil = self.bot.bd.usuarios.obtener_usuario_por_id(idUsuario)
 
         if len(fichas) >= perfil["max_fichas"]:
             await interaction.response.send_message(
@@ -776,10 +775,10 @@ class ReservaCog(commands.Cog):
     @reservaGroup.command(name="eliminar", description="Elimina una de tus reservas.")
     @app_commands.describe(id_reserva="La reserva a eliminar")
     @app_commands.autocomplete(id_reserva=autocompletarReserva)
-    @app_commands.checks.cooldown(1, 300.0, key=lambda i: (i.user.id))
+    @app_commands.checks.cooldown(1, 300.0, key=lambda i: i.user.id)
     async def eliminarReserva(self, interaction: discord.Interaction, id_reserva: int):
         self.bot.bd.usuarios.crearUsuario(interaction.user.id)
-        self.bot.bd.usuarios.actualizarActividad(interaction.user.id)
+        self.bot.bd.usuarios.actualizar_actividad(interaction.user.id)
 
         reserva = self.bot.bd.reservas.obtenerReserva(id_reserva)
         if reserva is None:
@@ -813,7 +812,7 @@ class ReservaCog(commands.Cog):
         name="eliminar_veri", description="Elimina una reserva de cualquier usuario."
     )
     @app_commands.describe(usuario="El usuario a obtener sus reservas")
-    @app_commands.checks.cooldown(1, 60.0, key=lambda i: (i.user.id))
+    @app_commands.checks.cooldown(1, 60.0, key=lambda i: i.user.id)
     @app_commands.checks.has_role(ID_VERIFICADOR)
     async def eliminarReservaAdmin(
         self, interaction: discord.Interaction, usuario: discord.User
@@ -853,7 +852,7 @@ class ReservaCog(commands.Cog):
         obra="La obra a obtener sus reservas",
     )
     @app_commands.autocomplete(obra=autocompletarObra)
-    @app_commands.checks.cooldown(1, 20.0, key=lambda i: (i.user.id))
+    @app_commands.checks.cooldown(1, 20.0, key=lambda i: i.user.id)
     async def listarReserva(
         self,
         interaction: discord.Interaction,
@@ -862,7 +861,7 @@ class ReservaCog(commands.Cog):
     ):
         usuario = usuario or interaction.user
         self.bot.bd.usuarios.crearUsuario(interaction.user.id)
-        self.bot.bd.usuarios.actualizarActividad(interaction.user.id)
+        self.bot.bd.usuarios.actualizar_actividad(interaction.user.id)
 
         if obra:
             reservas = self.bot.bd.buscarObraPorNombreOAlias(obra)
@@ -899,11 +898,11 @@ class ReservaCog(commands.Cog):
     )
     @app_commands.describe(reserva="La reserva a renovar, sólo si es su último día.")
     @app_commands.autocomplete(reserva=autocompletarReservaRenovada)
-    @app_commands.checks.cooldown(1, 60.0, key=lambda i: (i.user.id))
+    @app_commands.checks.cooldown(1, 60.0, key=lambda i: i.user.id)
     async def renovarReserva(self, interaction: discord.Interaction, reserva: int):
-        self.bot.bd.usuarios.crearUsuario(interaction.user.id)
-        self.bot.bd.usuarios.actualizarActividad(interaction.user.id)
-        usuario = self.bot.bd.usuarios.obtenerUsuario(interaction.user.id)
+        self.bot.bd.usuarios.crear_usuario(interaction.user.id)
+        self.bot.bd.usuarios.actualizar_actividad(interaction.user.id)
+        usuario = self.bot.bd.usuarios.obtener_usuario_por_id(interaction.user.id)
         duracionReserva = usuario["duracion_reserva"]
 
         renovar = self.bot.bd.reservas.obtenerReserva(reserva)
@@ -950,9 +949,7 @@ class ReservaCog(commands.Cog):
                 return
 
             embedNuevo = mensajeOg.embeds[0]
-            embedNuevo.description = (
-                f"**Inicio:** {inicioStr}\n" f"**Expira:** {finStr}"
-            )
+            embedNuevo.description = f"**Inicio:** {inicioStr}\n**Expira:** {finStr}"
             embedNuevo.color = discord.Color.green()
             mensajeNuevo = await canalOg.send(
                 content=interaction.user.mention,

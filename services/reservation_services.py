@@ -18,8 +18,6 @@ async def obtener_datos_reserva(bot: OkoBot, id_reserva: int) -> DatosReserva | 
         return None
 
     autor = await obtener_usuario(bot=bot, usuario_id=reserva["id_propietario"])
-    if autor is None:
-        return None
 
     return DatosReserva(
         id_reserva=reserva["id_reserva"],
@@ -33,6 +31,6 @@ async def obtener_datos_reserva(bot: OkoBot, id_reserva: int) -> DatosReserva | 
         enlace_imagen=reserva["enlace_imagen"],
         id_hilo=reserva["id_hilo"],
         id_mensaje=reserva["id_mensaje"],
-        autor_nombre=autor.display_name,
-        autor_icono_url=autor.display_avatar.url,
+        autor_nombre=autor.display_name if autor else "N/A",
+        autor_icono_url=autor.display_avatar.url if autor else None,
     )

@@ -23,6 +23,7 @@ from services.tasks.afk_users import (
 )
 from services.tasks.left_users_task import (
     ResultadoUsuariosAusentes,
+    eliminar_usuario_discord,
     obtener_usuarios_ausentes,
 )
 from utils.discord_utils import crear_hilo, obtener_canal_mensajes
@@ -65,6 +66,8 @@ async def servicio_purgar_usuarios_ausentes(bot: OkoBot) -> ResultadoUsuariosAus
         else:
             if eliminado:
                 exitos.append(usuario)
+
+    await eliminar_usuario_discord(bot=bot, registros=ResultadoUsuariosAusentes(exitos))
 
     return ResultadoUsuariosAusentes(usuarios=exitos)
 

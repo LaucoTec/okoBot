@@ -30,7 +30,6 @@ class ResultadoSincronizacionObras:
     obras_creadas: list[ObraCreada]
     obras_actualizadas: list[ObraActualizada]
     obras_eliminadas: list[ObraEliminada]
-    obras_sin_cambio: int = 0
 
 
 def _determinar_cambios_obras(
@@ -54,8 +53,8 @@ async def detectar_actualizaciones_obras(bot: OkoBot) -> ResultadoSincronizacion
     )
 
     canal = await obtener_canal_server(bot=bot, canal_id=ID_RESERVAS)
-    if not canal or not isinstance(canal, ForumChannel):
-        raise ValueError("No se encontró el canal de foro indicado.")
+    if not isinstance(canal, ForumChannel):
+        raise TypeError("No se encontró el canal de foro indicado.")
 
     hilos_actuales = {hilo.id: hilo.name for hilo in canal.threads}
 
@@ -88,9 +87,5 @@ async def detectar_actualizaciones_obras(bot: OkoBot) -> ResultadoSincronizacion
         resultado.obras_eliminadas.append(
             ObraEliminada(id_obra=obras_ids[id_hilo], nombre=obras_actuales[id_hilo])
         )
-
-    resultado.obras_sin_cambio = len(obras_actuales) - (
-        len(creadas) + len(eliminadas) + len(actualizadas)
-    )
 
     return resultado
